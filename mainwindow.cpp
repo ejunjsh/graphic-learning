@@ -3,6 +3,7 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include <QLabel>
+#include "painter.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -22,7 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     QWidget *page1 = new QWidget();
     QLabel *label1 = new QLabel("Content of Tab 1", page1);
     QVBoxLayout *page1Layout = new QVBoxLayout(page1);
+    Painter *painter = new Painter(page1);
     page1Layout->addWidget(label1);
+    page1Layout->addWidget(painter);
     page1->setLayout(page1Layout);
     tabWidget->addTab(page1, "Tab 1");
 
