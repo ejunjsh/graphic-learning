@@ -27,11 +27,16 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-        painter.cpp
+        painter.cpp \
+        BasicRaysTab.cpp
 
 HEADERS += \
         mainwindow.h \
-        painter.h
+        painter.h \
+        BasicRaysTab.h \
+        sphere.h \
+        vector.h \
+        config.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

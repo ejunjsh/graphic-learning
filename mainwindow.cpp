@@ -4,12 +4,13 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include "painter.h"
+#include "BasicRaysTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    // Set the window resolution to 1080p
-    resize(1280, 720);
+    // Set the fixed size of the main window
+    setFixedSize(700, 700);
     // Set the window title
     setWindowTitle("graphic-learning");
     // Create a central widget
@@ -20,21 +21,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     QTabWidget *tabWidget = new QTabWidget(centralWidget);
 
-    QWidget *page1 = new QWidget();
-    QLabel *label1 = new QLabel("Content of Tab 1", page1);
-    QVBoxLayout *page1Layout = new QVBoxLayout(page1);
-    Painter *painter = new Painter(page1);
-    page1Layout->addWidget(label1);
-    page1Layout->addWidget(painter);
-    page1->setLayout(page1Layout);
-    tabWidget->addTab(page1, "Tab 1");
+    BasicRaysTab *basicRaysTab = new BasicRaysTab();
+    tabWidget->addTab(basicRaysTab, "basic rays");
 
-    QWidget *page2 = new QWidget();
-    QLabel *label2 = new QLabel("Content of Tab 2", page2);
-    QVBoxLayout *page2Layout = new QVBoxLayout(page2);
-    page2Layout->addWidget(label2);
-    page2->setLayout(page2Layout);
-    tabWidget->addTab(page2, "Tab 2");
+
 
     layout->addWidget(tabWidget);
 

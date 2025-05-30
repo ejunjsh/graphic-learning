@@ -5,19 +5,19 @@
 
 class Vector {
 public:
-    float x, y, z;
+    double x, y, z;
 
     // Constructor
-    Vector(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
+    Vector(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
 
     // Magnitude of the vector
-    float Magnitude() const {
+    double Magnitude() const {
         return qSqrt(x * x + y * y + z * z);
     }
 
     // Normalize the vector
     Vector Normalize() const {
-        float mag = Magnitude();
+        double mag = Magnitude();
         return Vector(x / mag, y / mag, z / mag);
     }
 
@@ -32,7 +32,7 @@ public:
     }
 
     // Dot product of two vectors
-    float Dot(const Vector& other) const {
+    double Dot(const Vector& other) const {
         return x * other.x + y * other.y + z * other.z;
     }
 
@@ -46,7 +46,7 @@ public:
     }
 
     // Scalar multiplication
-    Vector operator*(float scalar) const {
+    Vector operator*(double scalar) const {
         return Vector(x * scalar, y * scalar, z * scalar);
     }
 };
