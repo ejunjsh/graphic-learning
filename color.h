@@ -6,7 +6,9 @@ public:
     int r, g, b;
 
     // Constructor
-    Color(int r = 0, int g = 0, int b = 0) : r(r), g(g), b(b) {}
+    Color(int r = 0, int g = 0, int b = 0) : r(r), g(g), b(b) {
+        Clamp();
+    }
 
     // Clamp color values to the range [0, 255]
     void Clamp() {
@@ -25,6 +27,14 @@ public:
         return Color(static_cast<int>(r * scalar),
                      static_cast<int>(g * scalar),
                      static_cast<int>(b * scalar));
+    }
+
+     Color operator*(const Color& other) const {
+        return Color(
+            static_cast<int>(r * other.r),
+            static_cast<int>(g * other.g),
+            static_cast<int>(b * other.b)
+        );
     }
 };
 

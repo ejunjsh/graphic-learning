@@ -36,6 +36,7 @@ HEADERS += \
         BasicRaysTab.h \
         sphere.h \
         vector.h \
+        light.h \
         config.h
 
 # Default rules for deployment.
