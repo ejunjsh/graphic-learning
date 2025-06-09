@@ -1,12 +1,13 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CONFIG_DIFFUSE_H
+#define CONFIG_DIFFUSE_H
 
 #include "vector.h"
 #include "color.h"
 #include "sphere.h"
+#include "light.h"
+#include "config/config.h"
 
-const int CANVAS_WIDTH = 600;
-const int CANVAS_HEIGHT = 600;
+namespace Diffuse {
 
 const int VIEWPORT_SIZE = 1;
 const int PROJECT_PLANE_Z = 1;
@@ -15,7 +16,8 @@ const Color BACKGROUND_COLOR(255, 255, 255);
 const Sphere SPHERES[] = {
     Sphere(Vector(0, -1, 3), 1, Color(255, 0, 0)),   // Example sphere 1
     Sphere(Vector(2, 0, 4), 1, Color(0, 0, 255)),    // Example sphere 2
-    Sphere(Vector(-2, 0, 4), 1, Color(0, 255, 0))    // Example sphere 3
+    Sphere(Vector(-2, 0, 4), 1, Color(0, 255, 0)),    // Example sphere 3
+    Sphere(Vector(0, -5001, 0), 5000, Color(255, 255, 0)) // Ground plane
 };
 
 const int NUM_SPHERES = sizeof(SPHERES) / sizeof(SPHERES[0]);
@@ -49,7 +51,40 @@ inline bool IntersectRaySphere(const Vector& origin, const Vector& direction, co
     return true;
 }
 
-// Returns the color of the closest sphere intersected by the ray, or background color.
+using LightType = Light::LightType;
+
+const Light LIGHTS[] = {
+    Light(LightType::AMBIENT, 0.2),
+    Light(LightType::POINT, 0.6, Vector(2, 1, 0)),
+    Light(LightType::DIRECTIONAL, 0.2, Vector(1, 4, 4))
+};
+const int NUM_LIGHTS = sizeof(LIGHTS) / sizeof(LIGHTS[0]);
+
+inline double ComputeLighting(const Vector& point, const Vector& normal) {
+    double intensity = 0.0;
+    double length_n = normal.Length(); // Should be 1.0 if normalized
+
+    for (int i = 0; i < NUM_LIGHTS; ++i) {
+        const Light& light = LIGHTS[i];
+        if (light.type == LightType::AMBIENT) {
+            intensity += light.intensity;
+        } else {
+            Vector vec_l;
+            if (light.type == LightType::POINT) {
+                vec_l = light.position - point;
+            } else { // DIRECTIONAL
+                vec_l = light.position;
+            }
+
+            double n_dot_l = normal.Dot(vec_l);
+            if (n_dot_l > 0) {
+                intensity += light.intensity * n_dot_l / (length_n * vec_l.Length());
+            }
+        }
+    }
+    return intensity;
+}
+
 inline Color TraceRay(const Vector& origin, const Vector& direction, double min_t, double max_t) {
     double closest_t = std::numeric_limits<double>::infinity();
     const Sphere* closest_sphere = nullptr;
@@ -72,7 +107,25 @@ inline Color TraceRay(const Vector& origin, const Vector& direction, double min_
         return BACKGROUND_COLOR;
     }
 
-    return closest_sphere->color;
+    // Compute intersection point and normal
+    Vector point = origin + direction * closest_t;
+    Vector normal = point - closest_sphere->center;
+    normal = normal * (1.0 / normal.Length()); // Normalize
+
+    // Compute lighting
+    double intensity = ComputeLighting(point, normal);
+
+    // Multiply sphere color by intensity
+    Color sphere_color = closest_sphere->color;
+    Color result(
+        static_cast<int>(sphere_color.r * intensity),
+        static_cast<int>(sphere_color.g * intensity),
+        static_cast<int>(sphere_color.b * intensity)
+    );
+
+    return result;
 }
 
-#endif // CONFIG_H
+} // namespace Diffuse
+
+#endif // CONFIG_DIFFUSE_H

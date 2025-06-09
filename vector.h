@@ -10,9 +10,14 @@ public:
     // Constructor
     Vector(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
 
+    // Length of the vector
+    double Length() const {
+        return qSqrt(x * x + y * y + z * z);
+    }
+
     // Magnitude of the vector
     double Magnitude() const {
-        return qSqrt(x * x + y * y + z * z);
+        return Length();
     }
 
     // Normalize the vector

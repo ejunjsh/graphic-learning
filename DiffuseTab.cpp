@@ -1,11 +1,11 @@
-#include "BasicRaysTab.h"
+#include "DiffuseTab.h"
 #include <QVBoxLayout>
 #include "painter.h"
-#include "config/config_basic_rays.h"
+#include "config/config_diffuse.h"
 
-using namespace BasicRays;
+using namespace Diffuse;
 
-BasicRaysTab::BasicRaysTab(QWidget *parent)
+DiffuseTab::DiffuseTab(QWidget *parent)
     : QWidget(parent)
 {
     QVBoxLayout *page1Layout = new QVBoxLayout(this);

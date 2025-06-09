@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include "color.h"
-#include "config.h"
+#include "config/config.h"
 
 class Painter : public QWidget {
     Q_OBJECT

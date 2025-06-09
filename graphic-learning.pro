@@ -28,16 +28,18 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
         painter.cpp \
-        BasicRaysTab.cpp
+        BasicRaysTab.cpp \
+        DiffuseTab.cpp
 
 HEADERS += \
         mainwindow.h \
         painter.h \
         BasicRaysTab.h \
+        DiffuseTab.h \
         sphere.h \
         vector.h \
         light.h \
-        config.h
+        config/*.h 
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

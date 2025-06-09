@@ -5,6 +5,7 @@
 #include <QLabel>
 #include "painter.h"
 #include "BasicRaysTab.h"
+#include "DiffuseTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     BasicRaysTab *basicRaysTab = new BasicRaysTab();
     tabWidget->addTab(basicRaysTab, "basic rays");
+
+    DiffuseTab *diffuseTab = new DiffuseTab();
+    tabWidget->addTab(diffuseTab, "diffuse");
 
 
 
