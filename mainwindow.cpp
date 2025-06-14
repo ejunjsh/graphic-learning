@@ -6,6 +6,7 @@
 #include "painter.h"
 #include "BasicRaysTab.h"
 #include "DiffuseTab.h"
+#include "SpecularTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -28,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
     DiffuseTab *diffuseTab = new DiffuseTab();
     tabWidget->addTab(diffuseTab, "diffuse");
 
+    SpecularTab *specularTab = new SpecularTab();
+    tabWidget->addTab(specularTab, "specular");
 
 
     layout->addWidget(tabWidget);

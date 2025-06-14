@@ -29,7 +29,8 @@ SOURCES += \
         mainwindow.cpp \
         painter.cpp \
         BasicRaysTab.cpp \
-        DiffuseTab.cpp
+        DiffuseTab.cpp \
+        SpecularTab.cpp 
 
 HEADERS += \
         mainwindow.h \
@@ -39,7 +40,8 @@ HEADERS += \
         sphere.h \
         vector.h \
         light.h \
-        config/*.h 
+        config/*.h \
+        SpecularTab.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
