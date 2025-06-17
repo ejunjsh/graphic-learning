@@ -1,5 +1,5 @@
-#ifndef CONFIG_SPECULAR_H
-#define CONFIG_SPECULAR_H
+#ifndef CONFIG_SHADOW_H
+#define CONFIG_SHADOW_H
 
 #include "vector.h"
 #include "color.h"
@@ -7,7 +7,7 @@
 #include "light.h"
 #include "config/config.h"
 
-namespace Specular {
+namespace Shadow {
 
 const int VIEWPORT_SIZE = 1;
 const int PROJECT_PLANE_Z = 1;
@@ -138,6 +138,6 @@ inline Color TraceRay(const Vector& origin, const Vector& direction, double min_
     return result;
 }
 
-} // namespace Specular
+} // namespace Shadow
 
-#endif // CONFIG_SPECULAR_H
+#endif // CONFIG_SHADOW_H

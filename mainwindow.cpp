@@ -7,6 +7,7 @@
 #include "BasicRaysTab.h"
 #include "DiffuseTab.h"
 #include "SpecularTab.h"
+#include "ShadowTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -31,6 +32,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     SpecularTab *specularTab = new SpecularTab();
     tabWidget->addTab(specularTab, "specular");
+
+    ShadowTab *shadowTab = new ShadowTab();
+    tabWidget->addTab(shadowTab, "shadow");
+
 
 
     layout->addWidget(tabWidget);
