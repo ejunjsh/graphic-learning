@@ -51,6 +51,33 @@ inline bool IntersectRaySphere(const Vector& origin, const Vector& direction, co
     return true;
 }
 
+// Returns a pair: (pointer to closest sphere, closest t). If no intersection, returns {nullptr, infinity}.
+inline std::pair<const Sphere*, double> ClosestIntersection(
+    const Vector& origin,
+    const Vector& direction,
+    double min_t,
+    double max_t
+) {
+    double closest_t = std::numeric_limits<double>::infinity();
+    const Sphere* closest_sphere = nullptr;
+
+    for (int i = 0; i < NUM_SPHERES; ++i) {
+        double t1, t2;
+        if (IntersectRaySphere(origin, direction, SPHERES[i], t1, t2)) {
+            if (t1 < closest_t && min_t < t1 && t1 < max_t) {
+                closest_t = t1;
+                closest_sphere = &SPHERES[i];
+            }
+            if (t2 < closest_t && min_t < t2 && t2 < max_t) {
+                closest_t = t2;
+                closest_sphere = &SPHERES[i];
+            }
+        }
+    }
+
+    return {closest_sphere, closest_t};
+}
+
 using LightType = Light::LightType;
 
 const Light LIGHTS[] = {
@@ -71,10 +98,19 @@ inline double ComputeLighting(const Vector& point, const Vector& normal,  const 
             intensity += light.intensity;
         } else {
             Vector vec_l;
+            double t_max;
             if (light.type == LightType::POINT) {
                 vec_l = light.position - point;
+                t_max = 1.0;
             } else { // DIRECTIONAL
                 vec_l = light.position;
+                t_max = std::numeric_limits<double>::infinity();
+
+            }
+
+            auto [blocker, t_blocker] = ClosestIntersection(point, vec_l, 0.001, t_max);
+            if (blocker != nullptr) {
+                continue;
             }
             
             //Diffuse reflection
@@ -97,23 +133,7 @@ inline double ComputeLighting(const Vector& point, const Vector& normal,  const 
 }
 
 inline Color TraceRay(const Vector& origin, const Vector& direction, double min_t, double max_t) {
-    double closest_t = std::numeric_limits<double>::infinity();
-    const Sphere* closest_sphere = nullptr;
-
-    for (int i = 0; i < NUM_SPHERES; ++i) {
-        double t1, t2;
-        if (IntersectRaySphere(origin, direction, SPHERES[i], t1, t2)) {
-            if (t1 < closest_t && min_t < t1 && t1 < max_t) {
-                closest_t = t1;
-                closest_sphere = &SPHERES[i];
-            }
-            if (t2 < closest_t && min_t < t2 && t2 < max_t) {
-                closest_t = t2;
-                closest_sphere = &SPHERES[i];
-            }
-        }
-    }
-
+    auto [closest_sphere, closest_t] = ClosestIntersection(origin, direction, min_t, max_t);
     if (closest_sphere == nullptr) {
         return BACKGROUND_COLOR;
     }
