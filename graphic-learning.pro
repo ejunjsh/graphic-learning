@@ -31,7 +31,8 @@ SOURCES += \
         BasicRaysTab.cpp \
         DiffuseTab.cpp \
         SpecularTab.cpp \
-        ShadowTab.cpp
+        ShadowTab.cpp \
+        ReflectionTab.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -43,7 +44,8 @@ HEADERS += \
         light.h \
         config/*.h \
         SpecularTab.h \
-        ShadowTab.h
+        ShadowTab.h \
+        ReflectionTab.h 
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

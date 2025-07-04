@@ -4,10 +4,11 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include "painter.h"
-#include "BasicRaysTab.h"
-#include "DiffuseTab.h"
-#include "SpecularTab.h"
-#include "ShadowTab.h"
+#include "tabs/BasicRaysTab.h"
+#include "tabs/DiffuseTab.h"
+#include "tabs/SpecularTab.h"
+#include "tabs/ShadowTab.h"
+#include "tabs/ReflectionTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -36,7 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
     ShadowTab *shadowTab = new ShadowTab();
     tabWidget->addTab(shadowTab, "shadow");
 
-
+    ReflectionTab *reflectionTab = new ReflectionTab();
+    tabWidget->addTab(reflectionTab, "reflection");
 
     layout->addWidget(tabWidget);
 
