@@ -4,11 +4,12 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include "painter.h"
-#include "tabs/BasicRaysTab.h"
-#include "tabs/DiffuseTab.h"
-#include "tabs/SpecularTab.h"
-#include "tabs/ShadowTab.h"
-#include "tabs/ReflectionTab.h"
+#include "BasicRaysTab.h"
+#include "DiffuseTab.h"
+#include "SpecularTab.h"
+#include "ShadowTab.h"
+#include "ReflectionTab.h"
+#include "CameraTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -39,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     ReflectionTab *reflectionTab = new ReflectionTab();
     tabWidget->addTab(reflectionTab, "reflection");
+
+    CameraTab *cameraTab = new CameraTab();
+    tabWidget->addTab(cameraTab, "camera");
 
     layout->addWidget(tabWidget);
 
