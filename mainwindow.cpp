@@ -10,6 +10,7 @@
 #include "ShadowTab.h"
 #include "ReflectionTab.h"
 #include "CameraTab.h"
+#include "LinesTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -43,6 +44,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     CameraTab *cameraTab = new CameraTab();
     tabWidget->addTab(cameraTab, "camera");
+
+    LinesTab *linesTab = new LinesTab();
+    tabWidget->addTab(linesTab, "lines");
 
     layout->addWidget(tabWidget);
 
