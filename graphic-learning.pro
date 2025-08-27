@@ -34,7 +34,8 @@ SOURCES += \
         ShadowTab.cpp \
         ReflectionTab.cpp \
         CameraTab.cpp \
-        LinesTab.cpp
+        LinesTab.cpp \
+        TriangleTab.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -50,7 +51,8 @@ HEADERS += \
         ReflectionTab.h \
         matrix.h \
         CameraTab.h \
-        LinesTab.h 
+        LinesTab.h \
+        TriangleTab.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

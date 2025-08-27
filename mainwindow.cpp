@@ -11,6 +11,7 @@
 #include "ReflectionTab.h"
 #include "CameraTab.h"
 #include "LinesTab.h"
+#include "TriangleTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -47,6 +48,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     LinesTab *linesTab = new LinesTab();
     tabWidget->addTab(linesTab, "lines");
+
+    TriangleTab *triangleTab = new TriangleTab();
+    tabWidget->addTab(triangleTab, "triangle");
 
     layout->addWidget(tabWidget);
 
