@@ -12,6 +12,7 @@
 #include "CameraTab.h"
 #include "LinesTab.h"
 #include "TriangleTab.h"
+#include "GradientTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -51,6 +52,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     TriangleTab *triangleTab = new TriangleTab();
     tabWidget->addTab(triangleTab, "triangle");
+
+    GradientTab *gradientTab = new GradientTab();
+    tabWidget->addTab(gradientTab, "gradient");
 
     layout->addWidget(tabWidget);
 
