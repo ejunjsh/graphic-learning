@@ -5,13 +5,13 @@
 Painter::Painter(QWidget *parent)
     : QWidget(parent) {
     // Initialization code (if any)
-    setFixedSize(600, 600);
+    setFixedSize(CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
 void Painter::render(Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT]) {
     // Store the pixel colors in the member variable
-    for (int x = 0; x < 600; ++x) {
-        for (int y = 0; y < 600; ++y) {
+    for (int x = 0; x < CANVAS_WIDTH; ++x) {
+        for (int y = 0; y < CANVAS_HEIGHT; ++y) {
             this->pixels[x][y] = pixels[x][y];
         }
     }

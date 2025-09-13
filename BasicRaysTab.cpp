@@ -13,7 +13,7 @@ BasicRaysTab::BasicRaysTab(QWidget *parent)
     page1Layout->addWidget(painter);
     this->setLayout(page1Layout);
 
-    Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT];
+    Color (*pixels)[CANVAS_HEIGHT] = new Color[CANVAS_WIDTH][CANVAS_HEIGHT];
 
     Vector camera_position = CAMERA_POSITION;
     for (int x = -CANVAS_WIDTH / 2; x < CANVAS_WIDTH / 2; ++x) {

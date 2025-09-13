@@ -13,12 +13,13 @@
 #include "LinesTab.h"
 #include "TriangleTab.h"
 #include "GradientTab.h"
+#include "PerspectiveTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     // Set the fixed size of the main window
-    setFixedSize(700, 700);
+    setFixedSize(CANVAS_WIDTH + 100, CANVAS_HEIGHT + 100);
     // Set the window title
     setWindowTitle("graphic-learning");
     // Create a central widget
@@ -55,6 +56,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     GradientTab *gradientTab = new GradientTab();
     tabWidget->addTab(gradientTab, "gradient");
+
+    PerspectiveTab *perspectiveTab = new PerspectiveTab();
+    tabWidget->addTab(perspectiveTab, "perspective");
 
     layout->addWidget(tabWidget);
 

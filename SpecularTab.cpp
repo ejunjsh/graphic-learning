@@ -13,7 +13,7 @@ SpecularTab::SpecularTab(QWidget *parent)
     layout->addWidget(painter);
     setLayout(layout);
 
-    Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT];
+    Color (*pixels)[CANVAS_HEIGHT] = new Color[CANVAS_WIDTH][CANVAS_HEIGHT];
 
     Vector camera_position = CAMERA_POSITION;
     for (int x = -CANVAS_WIDTH / 2; x < CANVAS_WIDTH / 2; ++x) {

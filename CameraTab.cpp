@@ -13,7 +13,7 @@ CameraTab::CameraTab(QWidget *parent)
     layout->addWidget(painter);
     setLayout(layout);
 
-    Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT];
+    Color (*pixels)[CANVAS_HEIGHT] = new Color[CANVAS_WIDTH][CANVAS_HEIGHT];
 
     Vector camera_position = CAMERA_POSITION;
     Matrix3x3 camera_rotation = CAMERA_ROTATION;
