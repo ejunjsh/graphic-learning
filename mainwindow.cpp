@@ -14,6 +14,7 @@
 #include "TriangleTab.h"
 #include "GradientTab.h"
 #include "PerspectiveTab.h"
+#include "SceneTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -59,6 +60,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     PerspectiveTab *perspectiveTab = new PerspectiveTab();
     tabWidget->addTab(perspectiveTab, "perspective");
+
+    SceneTab *sceneTab = new SceneTab();
+    tabWidget->addTab(sceneTab, "scene");
 
     layout->addWidget(tabWidget);
 

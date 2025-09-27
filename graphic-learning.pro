@@ -37,7 +37,8 @@ SOURCES += \
         LinesTab.cpp \
         TriangleTab.cpp \
         GradientTab.cpp \
-        PerspectiveTab.cpp
+        PerspectiveTab.cpp \
+        SceneTab.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -50,6 +51,7 @@ HEADERS += \
         point.h \
         pointx.h \
         light.h \
+        triangle.h \
         config/*.h \
         SpecularTab.h \
         ShadowTab.h \
@@ -59,7 +61,8 @@ HEADERS += \
         LinesTab.h \
         TriangleTab.h \
         GradientTab.h \
-        PerspectiveTab.h
+        PerspectiveTab.h \
+        SceneTab.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
