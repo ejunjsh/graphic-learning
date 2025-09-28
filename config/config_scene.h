@@ -99,6 +99,31 @@ namespace Scene
         }
     }
 
+    void DrawWirefameTriangle(const Point &p0, const Point &p1, const Point &p2, const Color &color)
+    {
+        DrawLine(p0, p1, color);
+        DrawLine(p1, p2, color);
+        DrawLine(p2, p0, color);
+    }
+
+    void RenderTriangle(const Triangle &triangle, const std::vector<Point> &projected)
+    {
+        DrawWirefameTriangle(projected[triangle.v0], projected[triangle.v1], projected[triangle.v2], triangle.color);
+    }
+
+    void RenderObject(const std::vector<Vertex> &vertices, const std::vector<Triangle> &triangles)
+    {
+        std::vector<Point> projected;
+        for (const auto &v : vertices)
+        {
+            projected.push_back(ProjectVertex(v));
+        }
+
+        for (const auto &t : triangles)
+        {
+            RenderTriangle(t, projected);
+        }
+    }
 
 }
 

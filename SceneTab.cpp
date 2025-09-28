@@ -17,37 +17,39 @@ SceneTab::SceneTab(QWidget *parent)
 
     InitializePixelsWhite();
 
-    Vertex vA(-2, -0.5, 5);
-    Vertex vB(-2, 0.5, 5);
-    Vertex vC(-1, 0.5, 5);
-    Vertex vD(-1, -0.5, 5);
+    auto vertexes = std::vector<Vertex>{
+            Vertex{1, 1, 1}, Vertex{-1, 1, 1}, Vertex{-1, -1, 1}, Vertex{1, -1, 1},
+            Vertex{1, 1, -1}, Vertex{-1, 1, -1}, Vertex{-1, -1, -1}, Vertex{1, -1, -1}
+    };
 
-    Vertex vAb(-2, -0.5, 6);
-    Vertex vBb(-2, 0.5, 6);
-    Vertex vCb(-1, 0.5, 6);
-    Vertex vDb(-1, -0.5, 6);
+    auto RED = Color(255, 0, 0);
+    auto GREEN = Color(0, 255, 0);
+    auto BLUE = Color(0, 0, 255);
+    auto YELLOW = Color(255, 255, 0);
+    auto PURPLE = Color(255, 0, 255);
+    auto CYAN = Color(0, 255, 255);
 
-    Color RED(255, 0, 0);
-    Color GREEN(0, 255, 0);
-    Color BLUE(0, 0, 255);
+    auto triangles = std::vector<Triangle>{
+            // front face
+            Triangle{0, 1, 2, RED}, Triangle{0, 2, 3, RED},
+            // back face
+            Triangle{4, 0, 3, GREEN}, Triangle{4, 3, 7, GREEN},
+            // left face
+            Triangle{5, 4, 7, BLUE}, Triangle{5, 7, 6, BLUE},
+            // right face
+            Triangle{1, 5, 6, YELLOW}, Triangle{1, 6, 2, YELLOW},
+            // top face
+            Triangle{4, 5, 1, PURPLE}, Triangle{4, 1, 0, PURPLE},
+            // bottom face
+            Triangle{2, 6, 7, CYAN}, Triangle{2, 7, 3, CYAN}
+    };
 
-    // Draw front face
-    DrawLine(ProjectVertex(vA), ProjectVertex(vB), BLUE);
-    DrawLine(ProjectVertex(vB), ProjectVertex(vC), BLUE);
-    DrawLine(ProjectVertex(vC), ProjectVertex(vD), BLUE);
-    DrawLine(ProjectVertex(vD), ProjectVertex(vA), BLUE);
+    for(auto &v : vertexes) {
+        v.x -= 1.5; 
+        v.z += 7; 
+    }
 
-    // Draw back face
-    DrawLine(ProjectVertex(vAb), ProjectVertex(vBb), RED);
-    DrawLine(ProjectVertex(vBb), ProjectVertex(vCb), RED);
-    DrawLine(ProjectVertex(vCb), ProjectVertex(vDb), RED);
-    DrawLine(ProjectVertex(vDb), ProjectVertex(vAb), RED);
-
-    // Draw connecting edges
-    DrawLine(ProjectVertex(vA), ProjectVertex(vAb), GREEN);
-    DrawLine(ProjectVertex(vB), ProjectVertex(vBb), GREEN);
-    DrawLine(ProjectVertex(vC), ProjectVertex(vCb), GREEN);
-    DrawLine(ProjectVertex(vD), ProjectVertex(vDb), GREEN);
+    RenderObject(vertexes, triangles);
 
     painter->render(pixels);
 }
