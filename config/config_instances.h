@@ -7,6 +7,8 @@
 #include "pointx.h"
 #include "vertex.h"
 #include "triangle.h"
+#include "model.h"
+#include "instance.h"
 
 namespace Instances
 {
@@ -110,21 +112,25 @@ namespace Instances
     {
         DrawWirefameTriangle(projected[triangle.v0], projected[triangle.v1], projected[triangle.v2], triangle.color);
     }
-
-    void RenderObject(const std::vector<Vertex> &vertices, const std::vector<Triangle> &triangles)
+    
+    void RenderInstance(const Instance &instance)
     {
         std::vector<Point> projected;
-        for (const auto &v : vertices)
-        {
-            projected.push_back(ProjectVertex(v));
+        for (const auto &v : instance.model.vertexes) {
+            projected.push_back(ProjectVertex(instance.position + v));
         }
 
-        for (const auto &t : triangles)
-        {
-            RenderTriangle(t, projected);
+        for (const auto &triangle : instance.model.triangles) {
+            RenderTriangle(triangle, projected);
         }
     }
 
+    void RenderScene(const std::vector<Instance> &instances)
+    {
+        for (const auto &instance : instances) {
+            RenderInstance(instance);
+        }
+    }
 }
 
 #endif // CONFIG_INSTANCES_H

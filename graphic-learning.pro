@@ -53,6 +53,8 @@ HEADERS += \
         pointx.h \
         light.h \
         triangle.h \
+        model.h \
+        instance.h \
         config/*.h \
         SpecularTab.h \
         ShadowTab.h \

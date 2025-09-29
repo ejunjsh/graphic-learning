@@ -44,12 +44,13 @@ InstancesTab::InstancesTab(QWidget *parent)
             Triangle{2, 6, 7, CYAN}, Triangle{2, 7, 3, CYAN}
     };
 
-    for(auto &v : vertexes) {
-        v.x -= 1.5; 
-        v.z += 7; 
-    }
+    auto cube = Model(vertexes, triangles);
+    auto instances = std::vector<Instance>{
+            Instance(cube, Vertex{-1.5, 0, 7}),
+            Instance(cube, Vertex{1.25, 2, 7.5})
+    };
 
-    RenderObject(vertexes, triangles);
+    RenderScene(instances);
 
     painter->render(pixels);
 }
