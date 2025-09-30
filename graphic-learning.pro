@@ -39,7 +39,8 @@ SOURCES += \
         GradientTab.cpp \
         PerspectiveTab.cpp \
         SceneTab.cpp \
-        InstancesTab.cpp
+        InstancesTab.cpp \
+        TransformsTab.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -55,6 +56,10 @@ HEADERS += \
         triangle.h \
         model.h \
         instance.h \
+        instancex.h \
+        camera.h \
+        mat4x4.h \
+        vertex4.h \
         config/*.h \
         SpecularTab.h \
         ShadowTab.h \
@@ -66,7 +71,8 @@ HEADERS += \
         GradientTab.h \
         PerspectiveTab.h \
         SceneTab.h \
-        InstancesTab.h
+        InstancesTab.h \
+        TransformsTab.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

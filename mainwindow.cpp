@@ -16,6 +16,7 @@
 #include "PerspectiveTab.h"
 #include "SceneTab.h"
 #include "InstancesTab.h"
+#include "TransformsTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -67,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     InstancesTab *instancesTab = new InstancesTab();
     tabWidget->addTab(instancesTab, "instances");
+
+    TransformsTab *transformsTab = new TransformsTab();
+    tabWidget->addTab(transformsTab, "transforms");
 
     layout->addWidget(tabWidget);
 
