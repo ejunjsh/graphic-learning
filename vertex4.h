@@ -1,5 +1,7 @@
 #pragma once
 
+#include "vertex.h"
+
 class Vertex4 {
 public:
     double x, y, z, w;
@@ -16,4 +18,7 @@ public:
     Vertex4 operator*(double scalar) const {
         return Vertex4(x * scalar, y * scalar, z * scalar, w * scalar);
     }
+
+    Vertex4(const Vertex& v)
+        : x(v.x), y(v.y), z(v.z), w(1.0) {}
 };

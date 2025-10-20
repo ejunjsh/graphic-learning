@@ -15,8 +15,18 @@ public:
     Vertex operator-(const Vertex& v) const {
         return Vertex(-v.x, -v.y, -v.z);
     }
+
+        // Dot product as a member
+    double Dot(const Vertex& other) const {
+        return x * other.x + y * other.y + z * other.z;
+    }
 };
 
 inline Vertex operator-(const Vertex& v) {
     return Vertex(-v.x, -v.y, -v.z);
+}
+
+// Free-function Dot
+inline double Dot(const Vertex& a, const Vertex& b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }

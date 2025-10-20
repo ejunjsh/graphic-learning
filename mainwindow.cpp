@@ -17,6 +17,7 @@
 #include "SceneTab.h"
 #include "InstancesTab.h"
 #include "TransformsTab.h"
+#include "ClippingTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -71,6 +72,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     TransformsTab *transformsTab = new TransformsTab();
     tabWidget->addTab(transformsTab, "transforms");
+
+    ClippingTab *clippingTab = new ClippingTab();
+    tabWidget->addTab(clippingTab, "clipping");
 
     layout->addWidget(tabWidget);
 
