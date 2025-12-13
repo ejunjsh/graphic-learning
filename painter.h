@@ -15,7 +15,7 @@ public:
 
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+    void paintEvent(QPaintEvent *) override;
 
 private:
     Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT]; // 2D array to store pixel colors

@@ -18,12 +18,13 @@
 #include "InstancesTab.h"
 #include "TransformsTab.h"
 #include "ClippingTab.h"
+#include "DepthTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     // Set the fixed size of the main window
-    setFixedSize(CANVAS_WIDTH + 100, CANVAS_HEIGHT + 100);
+    setFixedSize(CANVAS_WIDTH + 100, CANVAS_HEIGHT + 150);
     // Set the window title
     setWindowTitle("graphic-learning");
     // Create a central widget
@@ -75,6 +76,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     ClippingTab *clippingTab = new ClippingTab();
     tabWidget->addTab(clippingTab, "clipping");
+
+    DepthTab *depthTab = new DepthTab();
+    tabWidget->addTab(depthTab, "depth");
 
     layout->addWidget(tabWidget);
 

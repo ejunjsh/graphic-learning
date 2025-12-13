@@ -41,7 +41,8 @@ SOURCES += \
         SceneTab.cpp \
         InstancesTab.cpp \
         TransformsTab.cpp \
-        ClippingTab.cpp
+        ClippingTab.cpp \
+        DepthTab.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -62,7 +63,8 @@ HEADERS += \
         mat4x4.h \
         vertex4.h \
         plane.h \
-        config/*.h \
+        DepthBuffer.h \
+        SimpleShuffle.h \
         SpecularTab.h \
         ShadowTab.h \
         ReflectionTab.h \
@@ -75,7 +77,8 @@ HEADERS += \
         SceneTab.h \
         InstancesTab.h \
         TransformsTab.h \
-        ClippingTab.h
+        ClippingTab.h \
+        DepthTab.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

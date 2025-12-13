@@ -19,7 +19,7 @@ void Painter::render(Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT]) {
     update();
 }
 
-void Painter::paintEvent(QPaintEvent *event) {
+void Painter::paintEvent(QPaintEvent *) {
     QPainter painter(this);
     // Set the background color to white
     painter.fillRect(rect(), Qt::white);
