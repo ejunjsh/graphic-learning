@@ -48,7 +48,7 @@ DepthTab::DepthTab(QWidget *parent)
         } else {
             qDebug() << "Depth buffering & Backface culling enabled";
         }
-        RendeToPixels(false);
+        RenderToPixels(false);
         painter->render(pixels);
     });
 
@@ -81,7 +81,7 @@ DepthTab::DepthTab(QWidget *parent)
         } else {
             qDebug() << "Triangle outlines enabled";
         }
-        RendeToPixels(false);
+        RenderToPixels(false);
         painter->render(pixels);
     });
 
@@ -94,7 +94,7 @@ DepthTab::DepthTab(QWidget *parent)
 
     connect(shuffleBtn, &QPushButton::clicked, this, [=](){
         qDebug() << "Shuffle triangles button clicked";
-        RendeToPixels(true);
+        RenderToPixels(true);
         painter->render(pixels);
     });
 
@@ -104,7 +104,7 @@ DepthTab::DepthTab(QWidget *parent)
 
     mainLayout->addWidget(shuffleBtn);
 
-    RendeToPixels(false);
+    RenderToPixels(false);
 
     painter->render(pixels);
 }

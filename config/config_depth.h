@@ -495,7 +495,7 @@ inline void RenderTriangle(const Triangle& triangle,
             Triangle{2, 6, 7, CYAN}, Triangle{2, 7, 3, CYAN}
     };
 
-    void RendeToPixels(bool shuffle) {
+    void RenderToPixels(bool shuffle) {
 
     InitializePixelsWhite();
 
