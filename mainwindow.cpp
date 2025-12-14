@@ -19,6 +19,7 @@
 #include "TransformsTab.h"
 #include "ClippingTab.h"
 #include "DepthTab.h"
+#include "ShadingTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -79,6 +80,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     DepthTab *depthTab = new DepthTab();
     tabWidget->addTab(depthTab, "depth");
+
+    ShadingTab *shadingTab = new ShadingTab();
+    tabWidget->addTab(shadingTab, "shading");
 
     layout->addWidget(tabWidget);
 

@@ -1,0 +1,528 @@
+#ifndef CONFIG_SHADING_H
+#define CONFIG_SHADING_H
+
+
+#include <cmath>
+#include "config/config.h"
+#include "color.h"
+#include "pointx.h"
+#include "vertex.h"
+#include "triangle.h"
+#include "model.h"
+#include "instancex.h"
+#include "camera.h"
+#include "DepthBuffer.h"
+#include "SimpleShuffle.h"
+
+namespace Shading
+{
+
+    Color pixels[CANVAS_WIDTH][CANVAS_HEIGHT] = {};
+
+    constexpr double viewport_size = 1.0;
+    constexpr double projection_plane_z = 1.0;
+
+    bool depthChecksEnabled = true;
+
+    bool drawOutlinesEnabled = false;
+
+    DepthBuffer depthBuffer(CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Initialize all pixels to white
+    inline void InitializePixelsWhite()
+    {
+        // Clear depth buffer
+        depthBuffer.clear();
+
+        for (int x = 0; x < CANVAS_WIDTH; ++x)
+        {
+            for (int y = 0; y < CANVAS_HEIGHT; ++y)
+            {
+                pixels[x][y] = Color(255, 255, 255);
+            }
+        }
+    }
+
+    void PutPixel(double x, double y, const Color &color)
+    {
+        int canvas_x = CANVAS_WIDTH / 2 + static_cast<int>(x);
+        int canvas_y = CANVAS_HEIGHT / 2 - static_cast<int>(y) - 1;
+
+        if (canvas_x < 0 || canvas_x >= CANVAS_WIDTH || canvas_y < 0 || canvas_y >= CANVAS_HEIGHT)
+        {
+            return;
+        }
+
+        pixels[canvas_x][canvas_y] = color;
+    }
+
+    // Converts 2D viewport coordinates to 2D canvas coordinates.
+    Point ViewportToCanvas(const Point &p2d)
+    {
+        return Point(
+            p2d.x * CANVAS_WIDTH / viewport_size,
+            p2d.y * CANVAS_HEIGHT / viewport_size);
+    }
+
+    // Projects a 3D vertex to 2D canvas coordinates.
+    Point ProjectVertex(const Vertex &v)
+    {
+        return ViewportToCanvas(Point(
+            v.x * projection_plane_z / v.z,
+            v.y * projection_plane_z / v.z));
+    }
+
+    // Return the three local vertex indexes (0,1,2) sorted by projected Y (bottom -> top).
+    // vertex_indexes: array of 3 global vertex indices for the triangle (not modified).
+    // projected: vector of projected 2D points; each Point must have .y member.
+    inline std::array<int,3> SortedVertexIndexes(const std::array<int,3>& vertex_indexes,
+                                                const std::vector<Point>& projected)
+    {
+        std::array<int,3> idx = {0, 1, 2};
+
+        if (projected[vertex_indexes[idx[1]]].y < projected[vertex_indexes[idx[0]]].y)
+            std::swap(idx[0], idx[1]);
+        if (projected[vertex_indexes[idx[2]]].y < projected[vertex_indexes[idx[0]]].y)
+            std::swap(idx[0], idx[2]);
+        if (projected[vertex_indexes[idx[2]]].y < projected[vertex_indexes[idx[1]]].y)
+            std::swap(idx[1], idx[2]);
+
+        return idx;
+    }
+
+    // Interpolate returns std::vector<double>
+    std::vector<double> Interpolate(int i0, double d0, int i1, double d1)
+    {
+        if (i0 == i1)
+        {
+            return {d0};
+        }
+        std::vector<double> values;
+        double a = (d1 - d0) / (i1 - i0);
+        double d = d0;
+        for (int i = i0; i <= i1; ++i)
+        {
+            if (i == i1) {
+                values.push_back(d1); 
+                break;
+            }
+            values.push_back(d);
+            d += a;
+        }
+        return values;
+    }
+
+    inline std::pair<std::vector<double>, std::vector<double>>
+    EdgeInterpolate(int y0, double v0, int y1, double v1, int y2, double v2) 
+    {
+        auto v01 = Interpolate(y0, v0, y1, v1);
+        auto v12 = Interpolate(y1, v1, y2, v2);
+        auto v02 = Interpolate(y0, v0, y2, v2);
+
+        if (!v01.empty()) v01.pop_back(); // remove duplicate at y1
+        std::vector<double> v012;
+        v012.reserve(v01.size() + v12.size());
+        v012.insert(v012.end(), v01.begin(), v01.end());
+        v012.insert(v012.end(), v12.begin(), v12.end());
+
+        return { std::move(v02), std::move(v012) };
+    }
+
+    // DrawLine using Point and Color, assumes PutPixel(double x, double y, const Color&)
+    void DrawLine(const Point &p0, const Point &p1, const Color &color)
+    {
+        int x0 = static_cast<int>(std::round(p0.x));
+        int y0 = static_cast<int>(std::round(p0.y));
+        int x1 = static_cast<int>(std::round(p1.x));
+        int y1 = static_cast<int>(std::round(p1.y));
+        int dx = x1 - x0, dy = y1 - y0;
+
+        if (std::abs(dx) > std::abs(dy))
+        {
+            if (dx < 0)
+            {
+                std::swap(x0, x1);
+                std::swap(y0, y1);
+            }
+            auto ys = Interpolate(x0, y0, x1, y1);
+            for (int x = x0; x <= x1; ++x)
+            {
+                PutPixel(x, ys[x - x0], color);
+            }
+        }
+        else
+        {
+            if (dy < 0)
+            {
+                std::swap(x0, x1);
+                std::swap(y0, y1);
+            }
+            auto xs = Interpolate(y0, x0, y1, x1);
+            for (int y = y0; y <= y1; ++y)
+            {
+                PutPixel(xs[y - y0], y, color);
+            }
+        }
+    }
+
+    inline Vertex IntersectPlane(const Plane &plane, const Vertex &v1, const Vertex &v2)
+    {
+        // p(t) = v1 + t*(v2-v1), find t so Dot(n, p(t)) + d = 0
+        Vertex dir{v2.x - v1.x, v2.y - v1.y, v2.z - v1.z};
+        double denom = Dot(plane.normal, dir);
+        double numer = -(Dot(plane.normal, v1) + plane.distance);
+        double t = denom == 0.0 ? 0.0 : numer / denom;
+        return Vertex(v1.x + dir.x * t, v1.y + dir.y * t, v1.z + dir.z * t);
+    }
+
+    inline void ClipTriangle(const Triangle &triangle,
+                             const Plane &plane,
+                             std::vector<Triangle> &out_triangles,
+                             std::vector<Vertex> &vertexes)
+    {
+        Vertex v0 = vertexes[triangle.v0];
+        Vertex v1 = vertexes[triangle.v1];
+        Vertex v2 = vertexes[triangle.v2];
+
+        bool in0 = Dot(plane.normal, v0) + plane.distance > 0.0;
+        bool in1 = Dot(plane.normal, v1) + plane.distance > 0.0;
+        bool in2 = Dot(plane.normal, v2) + plane.distance > 0.0;
+
+        int in_count = static_cast<int>(in0) + static_cast<int>(in1) + static_cast<int>(in2);
+
+        if (in_count == 0)
+        {
+            // fully clipped out
+            return;
+        }
+
+        if (in_count == 3)
+        {
+            // fully inside
+            out_triangles.push_back(triangle);
+            return;
+        }
+
+        if (in_count == 1)
+        {
+            // one vertex inside -> one output triangle
+            int in_idx, out_idx0, out_idx1;
+            if (in0)
+            {
+                in_idx = triangle.v0;
+                out_idx0 = triangle.v1;
+                out_idx1 = triangle.v2;
+            }
+            else if (in1)
+            {
+                in_idx = triangle.v1;
+                out_idx0 = triangle.v2;
+                out_idx1 = triangle.v0;
+            }
+            else
+            {
+                in_idx = triangle.v2;
+                out_idx0 = triangle.v0;
+                out_idx1 = triangle.v1;
+            }
+
+            Vertex i0 = IntersectPlane(plane, vertexes[in_idx], vertexes[out_idx0]);
+            Vertex i1 = IntersectPlane(plane, vertexes[in_idx], vertexes[out_idx1]);
+
+            int idx_i0 = static_cast<int>(vertexes.size());
+            vertexes.push_back(i0);
+            int idx_i1 = static_cast<int>(vertexes.size());
+            vertexes.push_back(i1);
+
+            out_triangles.emplace_back(in_idx, idx_i0, idx_i1, triangle.color);
+            return;
+        }
+
+        // in_count == 2 : two vertices inside -> two output triangles
+        int out_idx, in_idx0, in_idx1;
+        if (!in0)
+        {
+            out_idx = triangle.v0;
+            in_idx0 = triangle.v1;
+            in_idx1 = triangle.v2;
+        }
+        else if (!in1)
+        {
+            out_idx = triangle.v1;
+            in_idx0 = triangle.v2;
+            in_idx1 = triangle.v0;
+        }
+        else
+        {
+            out_idx = triangle.v2;
+            in_idx0 = triangle.v0;
+            in_idx1 = triangle.v1;
+        }
+
+        Vertex i0 = IntersectPlane(plane, vertexes[in_idx0], vertexes[out_idx]);
+        Vertex i1 = IntersectPlane(plane, vertexes[in_idx1], vertexes[out_idx]);
+
+        int idx_i0 = static_cast<int>(vertexes.size());
+        vertexes.push_back(i0);
+        int idx_i1 = static_cast<int>(vertexes.size());
+        vertexes.push_back(i1);
+
+        // two triangles: (in0, in1, i0) and (in1, i1, i0)
+        out_triangles.emplace_back(in_idx0, in_idx1, idx_i0, triangle.color);
+        out_triangles.emplace_back(in_idx1, idx_i1, idx_i0, triangle.color);
+    }
+
+    inline std::optional<Model> TransformAndClip(const std::vector<Plane> &clipping_planes,
+                                                 const Model &model,
+                                                 const Mat4x4 &transform)
+    {
+        // Transform bounding sphere center (homogeneous multiply)
+        Vertex4 center4 = transform * Vertex4(model.bounds_center);
+        Vertex center;
+        if (center4.w != 0.0)
+        {
+            center = Vertex(center4.x / center4.w,
+                            center4.y / center4.w,
+                            center4.z / center4.w);
+        }
+        else
+        {
+            center = Vertex(center4.x, center4.y, center4.z);
+        }
+
+        // Early reject against clipping planes using bounding sphere
+        for (const Plane &p : clipping_planes)
+        {
+            double distance = Dot(p.normal, center) + p.distance;
+            if (distance < -model.bounds_radius)
+            {
+                return std::nullopt; // fully culled
+            }
+        }
+
+        // Apply modelview transform to all vertices (convert to 3D by /w)
+        std::vector<Vertex> vertexes;
+        vertexes.reserve(model.vertexes.size());
+        for (const Vertex &v : model.vertexes)
+        {
+            Vertex4 tv4 = transform * Vertex4(v);
+            if (tv4.w != 0.0)
+            {
+                vertexes.emplace_back(tv4.x / tv4.w, tv4.y / tv4.w, tv4.z / tv4.w);
+            }
+            else
+            {
+                vertexes.emplace_back(tv4.x, tv4.y, tv4.z);
+            }
+        }
+
+        // Clip the model triangles against each plane in sequence
+        std::vector<Triangle> triangles = model.triangles;
+        for (const Plane &p : clipping_planes)
+        {
+            std::vector<Triangle> new_triangles;
+            new_triangles.reserve(triangles.size());
+            for (const Triangle &t : triangles)
+            {
+                ClipTriangle(t, p, new_triangles, vertexes);
+            }
+            triangles.swap(new_triangles);
+            if (triangles.empty())
+                break; // nothing left to render
+        }
+
+        // Build and return clipped model (assumes Model has matching constructor)
+        Model out_model(vertexes, triangles, center, model.bounds_radius);
+        return out_model;
+    }
+
+
+inline void RenderTriangle(const Triangle& triangle,
+                           const std::vector<Vertex>& vertexes,
+                           const std::vector<Point>& projected)
+{
+    // build local vertex index array (triangle.v0/v1/v2)
+    std::array<int,3> verts = { triangle.v0, triangle.v1, triangle.v2 };
+
+    // sort local indexes by projected Y (bottom -> top)
+    std::array<int,3> order = SortedVertexIndexes(verts, projected);
+    int i0 = order[0], i1 = order[1], i2 = order[2];
+    auto idx = [&](int local)->int { return verts[local]; };
+
+    // original vertices for normal / centroid
+    const Vertex &A = vertexes[triangle.v0];
+    const Vertex &B = vertexes[triangle.v1];
+    const Vertex &C = vertexes[triangle.v2];
+
+    // backface culling: use triangle normal (unsorted vertex order)
+    Vertex normal = ComputeTriangleNormal(A, B, C);
+    if (depthChecksEnabled) {
+        Vertex centre{ (A.x + B.x + C.x) / -3.0,
+                       (A.y + B.y + C.y) / -3.0,
+                       (A.z + B.z + C.z) / -3.0 };
+        auto dot_product = Dot(centre, normal);
+        if (dot_product < 0.0) return; // cull
+    }
+
+    // projected points (sorted)
+    Point p0 = projected[idx(i0)];
+    Point p1 = projected[idx(i1)];
+    Point p2 = projected[idx(i2)];
+
+    int y0 = static_cast<int>(std::round(p0.y));
+    int y1 = static_cast<int>(std::round(p1.y));
+    int y2 = static_cast<int>(std::round(p2.y));
+
+    // edge interpolation for X and 1/Z
+    auto xe = EdgeInterpolate(y0, p0.x, y1, p1.x, y2, p2.x);
+    auto ze = EdgeInterpolate(y0, 1.0 / vertexes[idx(i0)].z,
+                                   y1, 1.0 / vertexes[idx(i1)].z,
+                                   y2, 1.0 / vertexes[idx(i2)].z);
+
+    const std::vector<double> &x02  = xe.first;
+    const std::vector<double> &x012 = xe.second;
+    const std::vector<double> &iz02 = ze.first;
+    const std::vector<double> &iz012= ze.second;
+
+    // pick left/right by comparing midpoint
+    std::size_t m = x02.size() / 2;
+    const std::vector<double> *x_left, *x_right, *iz_left, *iz_right;
+    if (m < x02.size() && m < x012.size() && x02[m] < x012[m]) {
+        x_left = &x02;  x_right = &x012;
+        iz_left  = &iz02; iz_right = &iz012;
+    } else {
+        x_left = &x012; x_right = &x02;
+        iz_left  = &iz012; iz_right = &iz02;
+    }
+
+    // rasterize scanlines
+    for (int y = y0; y <= y2; ++y) {
+        int row = y - y0;
+        if (row < 0) continue;
+        if (static_cast<std::size_t>(row) >= x_left->size() ||
+            static_cast<std::size_t>(row) >= x_right->size() ||
+            static_cast<std::size_t>(row) >= iz_left->size() ||
+            static_cast<std::size_t>(row) >= iz_right->size()) continue;
+
+        int xl = static_cast<int>(std::round((*x_left)[row]));
+        int xr = static_cast<int>(std::round((*x_right)[row]));
+        if (xr < xl) std::swap(xl, xr);
+
+        // interpolate inverse-z across scanline
+        auto zscan = Interpolate(xl, (*iz_left)[row], xr, (*iz_right)[row]);
+
+        for (int x = xl; x <= xr; ++x) {
+            double inv_z = zscan[x - xl];
+            if (!depthChecksEnabled || depthBuffer.updateIfCloserCentered(x, y, inv_z)) {
+                PutPixel(x, y, triangle.color);
+            }
+        }
+    }
+
+    // optional outlines
+    if (drawOutlinesEnabled) {
+        Color outline = triangle.color * 0.75;
+        DrawLine(projected[idx(i0)], projected[idx(i1)], outline);
+        DrawLine(projected[idx(i0)], projected[idx(i2)], outline);
+        DrawLine(projected[idx(i2)], projected[idx(i1)], outline);
+    }
+}
+
+    // Renders a model
+    void RenderModel(const Model &model)
+    {
+        std::vector<Point> projected;
+        projected.reserve(model.vertexes.size());
+        
+        for (const auto &v : model.vertexes)
+        {
+            projected.push_back(ProjectVertex(v));
+        }
+        for (const auto &tri : model.triangles)
+        {
+            RenderTriangle(tri, model.vertexes, projected);
+        }
+    }
+
+    void RenderScene(const Camera &camera, const std::vector<Instance> &instances)
+    {
+        Mat4x4 cameraMatrix = camera.orientation.Transposed() *
+                              MakeTranslationMatrix(-camera.position);
+
+        for (const auto &instance : instances)
+        {
+            Mat4x4 transform = cameraMatrix * instance.transform;
+
+            // Transform the model by transform, clip against camera planes.
+            auto clipped_model_opt = TransformAndClip(camera.clipping_planes, instance.model, transform);
+            if (!clipped_model_opt)
+                continue;
+
+            RenderModel(*clipped_model_opt);
+        }
+    }
+
+    auto Identity4x4 = Mat4x4{
+        {1.0, 0.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0, 0.0},
+        {0.0, 0.0, 1.0, 0.0},
+        {0.0, 0.0, 0.0, 1.0}};
+
+    auto vertexes = std::vector<Vertex>{
+            Vertex{1, 1, 1}, Vertex{-1, 1, 1}, Vertex{-1, -1, 1}, Vertex{1, -1, 1},
+            Vertex{1, 1, -1}, Vertex{-1, 1, -1}, Vertex{-1, -1, -1}, Vertex{1, -1, -1}
+    };
+
+    auto RED = Color(255, 0, 0);
+    auto GREEN = Color(0, 255, 0);
+    auto BLUE = Color(0, 0, 255);
+    auto YELLOW = Color(255, 255, 0);
+    auto PURPLE = Color(255, 0, 255);
+    auto CYAN = Color(0, 255, 255);
+
+    auto triangles = std::vector<Triangle>{
+            // front face
+            Triangle{0, 1, 2, RED}, Triangle{0, 2, 3, RED},
+            // back face
+            Triangle{4, 0, 3, GREEN}, Triangle{4, 3, 7, GREEN},
+            // left face
+            Triangle{5, 4, 7, BLUE}, Triangle{5, 7, 6, BLUE},
+            // right face
+            Triangle{1, 5, 6, YELLOW}, Triangle{1, 6, 2, YELLOW},
+            // top face
+            Triangle{4, 5, 1, PURPLE}, Triangle{4, 1, 0, PURPLE},
+            // bottom face
+            Triangle{2, 6, 7, CYAN}, Triangle{2, 7, 3, CYAN}
+    };
+
+    void RenderToPixels(bool shuffle) {
+
+    InitializePixelsWhite();
+
+    if (shuffle) {
+        SimpleShuffle(triangles);
+    }
+
+    auto cube = Model(vertexes, triangles, Vertex(0,0,0), std::sqrt(3.0));
+    auto instances = std::vector<Instance>{
+            Instance(cube, Vertex{-1.5, 0, 7}, Identity4x4, 0.75),
+            Instance(cube, Vertex{1.25, 2.5, 7.5}, MakeOYRotationMatrix(195))
+    };
+
+    auto camera = Camera(Vertex{-3, 1, 2}, MakeOYRotationMatrix(-30));
+
+        // Clipping planes (near, left, right, top, bottom) with unit normals
+    double s2 = std::sqrt(2.0) / 2.0;
+    camera.clipping_planes = {
+        Plane(Vertex(0, 0, 1), -1.0),        // Near
+        Plane(Vertex(s2, 0, s2), 0.0),       // Left
+        Plane(Vertex(-s2, 0, s2), 0.0),      // Right
+        Plane(Vertex(0, -s2, s2), 0.0),      // Top
+        Plane(Vertex(0, s2, s2), 0.0)        // Bottom
+    };
+
+    RenderScene(camera, instances);
+    }   
+}
+
+#endif // CONFIG_SHADING_H
