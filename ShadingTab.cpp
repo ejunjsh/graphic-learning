@@ -20,89 +20,95 @@ ShadingTab::ShadingTab(QWidget *parent)
     setLayout(mainLayout);
 
     // Option widgets
-    QHBoxLayout *optionsLayout1 = new QHBoxLayout();
-    QLabel *label = new QLabel("Depth buffering & Backface culling:", this);
-    QRadioButton *option1 = new QRadioButton("Disabled", this);
-    QRadioButton *option2 = new QRadioButton("Enabled", this);
-    
-    QButtonGroup *depthGroup = new QButtonGroup(this);
-    depthGroup->addButton(option1, 0);
-    depthGroup->addButton(option2, 1);
+    QHBoxLayout *lightingLayout = new QHBoxLayout();
+    QLabel *lightingLabel = new QLabel("Lighting model:", this);
+    QRadioButton *diffuseOption = new QRadioButton("Diffuse only", this);
+    QRadioButton *specularOption = new QRadioButton("Specular only", this);
+    QRadioButton *diffuseSpecularOption = new QRadioButton("Diffuse + Specular", this);
 
-    // set initial state from depthChecksEnabled
-    option2->setChecked(depthChecksEnabled);
-    option1->setChecked(!depthChecksEnabled);
+    QButtonGroup *lightingGroup = new QButtonGroup(this);
+    lightingGroup->addButton(diffuseOption, 0);
+    lightingGroup->addButton(specularOption, 1);
+    lightingGroup->addButton(diffuseSpecularOption, 2);
 
-    optionsLayout1->addWidget(label);
-    optionsLayout1->addWidget(option1);
-    optionsLayout1->addWidget(option2);
+    diffuseSpecularOption->setChecked(true);
 
-    bool* depthChecksEnabledPtr = &depthChecksEnabled;
-    connect(depthGroup, &QButtonGroup::buttonToggled,
+    lightingLayout->addWidget(lightingLabel);
+    lightingLayout->addWidget(diffuseOption);
+    lightingLayout->addWidget(specularOption);
+    lightingLayout->addWidget(diffuseSpecularOption);
+
+    connect(lightingGroup, &QButtonGroup::buttonToggled,
             this, [=](QAbstractButton *btn, bool checked){
         if (!checked) return;
-        // option2 = Enabled
-        *depthChecksEnabledPtr = (btn == option2);
-        if(btn == option1) {
-            qDebug() << "Depth buffering & Backface culling disabled";
+        
+        if(btn == diffuseOption) {
+            qDebug() << "Diffuse only lighting model selected";
+        } else if (btn == specularOption) { 
+            qDebug() << "Specular only lighting model selected";
         } else {
-            qDebug() << "Depth buffering & Backface culling enabled";
+            qDebug() << "Diffuse + Specular lighting model selected";
         }
-        RenderToPixels(false);
-        painter->render(pixels);
     });
 
-    QHBoxLayout* optionsLayout3 = new QHBoxLayout();
+    QLabel *shadingLabel = new QLabel("Shading model:", this);
+    QRadioButton *flatOption = new QRadioButton("Flat", this);
+    QRadioButton *gouraudOption = new QRadioButton("Gouraud", this);
+    QRadioButton *phongOption = new QRadioButton("Phong", this);
 
-    QLabel *label2 = new QLabel("Triangle outlines", this);
-    QRadioButton *option5 = new QRadioButton("Disabled", this);
-    QRadioButton *option6 = new QRadioButton("Enabled", this);
+    QButtonGroup *shadingGroup = new QButtonGroup(this);
+    shadingGroup->addButton(flatOption, 0);
+    shadingGroup->addButton(gouraudOption, 1);
+    shadingGroup->addButton(phongOption, 2);
 
-    QButtonGroup *outlineGroup = new QButtonGroup(this);
-    outlineGroup->addButton(option5, 0);
-    outlineGroup->addButton(option6, 1);
+    phongOption->setChecked(true);
 
-    // set initial state from drawOutlinesEnabled
-    option6->setChecked(drawOutlinesEnabled);
-    option5->setChecked(!drawOutlinesEnabled);
+    lightingLayout->addWidget(shadingLabel);
+    lightingLayout->addWidget(flatOption);
+    lightingLayout->addWidget(gouraudOption);
+    lightingLayout->addWidget(phongOption);
 
-    optionsLayout3->addWidget(label2);
-    optionsLayout3->addWidget(option5);
-    optionsLayout3->addWidget(option6);
-
-    bool* drawOutlinesEnabledPtr = &drawOutlinesEnabled;
-    connect(outlineGroup, &QButtonGroup::buttonToggled,
+    connect(shadingGroup, &QButtonGroup::buttonToggled,
             this, [=](QAbstractButton *btn, bool checked){
         if (!checked) return;
-        // option6 = Enabled
-        *drawOutlinesEnabledPtr = (btn == option6);
-        if(btn == option5) {
-            qDebug() << "Triangle outlines disabled";
+
+        if(btn == flatOption) {
+            qDebug() << "Flat shading selected";
+        } else if (btn == gouraudOption) {
+            qDebug() << "Gouraud shading selected";
         } else {
-            qDebug() << "Triangle outlines enabled";
+            qDebug() << "Phong shading selected";
         }
-        RenderToPixels(false);
-        painter->render(pixels);
     });
 
-    
-    QHBoxLayout* optionsLayout = new QHBoxLayout();
-    optionsLayout->addLayout(optionsLayout1);
-    optionsLayout->addLayout(optionsLayout3);
+    QHBoxLayout* normalsLayout = new QHBoxLayout();
+    QLabel *normalsLabel = new QLabel("Normals:", this);
+    QRadioButton *computedNormalsOption = new QRadioButton("Computed triangle normals", this);
+    QRadioButton *vertexNormalsOption = new QRadioButton("Vertex normals from model", this);
 
-    QPushButton *shuffleBtn = new QPushButton("Shuffle triangles", this);
+    QButtonGroup *normalsGroup = new QButtonGroup(this);
+    normalsGroup->addButton(computedNormalsOption, 0);
+    normalsGroup->addButton(vertexNormalsOption, 1);
 
-    connect(shuffleBtn, &QPushButton::clicked, this, [=](){
-        qDebug() << "Shuffle triangles button clicked";
-        RenderToPixels(true);
-        painter->render(pixels);
+    normalsLayout->addWidget(normalsLabel);
+    normalsLayout->addWidget(computedNormalsOption);
+    normalsLayout->addWidget(vertexNormalsOption);
+    vertexNormalsOption->setChecked(true);
+
+    connect(normalsGroup, &QButtonGroup::buttonToggled,
+            this, [=](QAbstractButton *btn, bool checked){
+        if (!checked) return;
+
+        if(btn == computedNormalsOption) {
+            qDebug() << "Computed triangle normals selected";
+        } else {
+            qDebug() << "Vertex normals from model selected";
+        }
     });
 
-    
+    mainLayout->addLayout(lightingLayout);
 
-    mainLayout->addLayout(optionsLayout);
-
-    mainLayout->addWidget(shuffleBtn);
+    mainLayout->addLayout(normalsLayout);
 
     RenderToPixels(false);
 

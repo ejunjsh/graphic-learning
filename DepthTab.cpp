@@ -54,7 +54,7 @@ DepthTab::DepthTab(QWidget *parent)
 
     QHBoxLayout* optionsLayout3 = new QHBoxLayout();
 
-    QLabel *label2 = new QLabel("Triangle outlines", this);
+    QLabel *label2 = new QLabel("Triangle outlines:", this);
     QRadioButton *option5 = new QRadioButton("Disabled", this);
     QRadioButton *option6 = new QRadioButton("Enabled", this);
 
