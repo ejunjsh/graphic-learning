@@ -495,20 +495,26 @@ inline void RenderTriangle(const Triangle& triangle,
     auto PURPLE = Color(255, 0, 255);
     auto CYAN = Color(0, 255, 255);
 
-    auto triangles = std::vector<Triangle>{
-            // front face
-            Triangle{0, 1, 2, RED}, Triangle{0, 2, 3, RED},
-            // back face
-            Triangle{4, 0, 3, GREEN}, Triangle{4, 3, 7, GREEN},
-            // left face
-            Triangle{5, 4, 7, BLUE}, Triangle{5, 7, 6, BLUE},
-            // right face
-            Triangle{1, 5, 6, YELLOW}, Triangle{1, 6, 2, YELLOW},
-            // top face
-            Triangle{4, 5, 1, PURPLE}, Triangle{4, 1, 0, PURPLE},
-            // bottom face
-            Triangle{2, 6, 7, CYAN}, Triangle{2, 7, 3, CYAN}
-    };
+        auto triangles = std::vector<Triangle>{
+            // front face (normal +Z)
+            Triangle{0, 1, 2, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}},
+            Triangle{0, 2, 3, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}},
+            // back face (normal -Z)
+            Triangle{4, 0, 3, GREEN,  {Vertex{1,0,0}, Vertex{1,0,0}, Vertex{1,0,0}}},
+            Triangle{4, 3, 7, GREEN,  {Vertex{1,0,0}, Vertex{1,0,0}, Vertex{1,0,0}}},
+            // left face (normal +X)
+            Triangle{5, 4, 7, BLUE,   {Vertex{0,0,-1}, Vertex{0,0,-1}, Vertex{0,0,-1}}},
+            Triangle{5, 7, 6, BLUE,   {Vertex{0,0,-1}, Vertex{0,0,-1}, Vertex{0,0,-1}}},
+            // right face (normal -X)
+            Triangle{1, 5, 6, YELLOW, {Vertex{-1,0,0}, Vertex{-1,0,0}, Vertex{-1,0,0}}},
+            Triangle{1, 6, 2, YELLOW, {Vertex{-1,0,0}, Vertex{-1,0,0}, Vertex{-1,0,0}}},
+            // top face (normal +Y)
+            Triangle{4, 5, 1, PURPLE, {Vertex{0,1,0}, Vertex{0,1,0}, Vertex{0,1,0}}},
+            Triangle{4, 1, 0, PURPLE, {Vertex{0,1,0}, Vertex{0,1,0}, Vertex{0,1,0}}},
+            // bottom face (normal -Y)
+            Triangle{2, 6, 7, CYAN,   {Vertex{0,-1,0}, Vertex{0,-1,0}, Vertex{0,-1,0}}},
+            Triangle{2, 7, 3, CYAN,   {Vertex{0,-1,0}, Vertex{0,-1,0}, Vertex{0,-1,0}}}
+        };
 
     void RenderToPixels() {
 
