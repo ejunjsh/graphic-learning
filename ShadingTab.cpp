@@ -41,14 +41,18 @@ ShadingTab::ShadingTab(QWidget *parent)
     connect(lightingGroup, &QButtonGroup::buttonToggled,
             this, [=](QAbstractButton *btn, bool checked){
         if (!checked) return;
-        
-        if(btn == diffuseOption) {
-            qDebug() << "Diffuse only lighting model selected";
-        } else if (btn == specularOption) { 
-            qDebug() << "Specular only lighting model selected";
+        if (btn == diffuseOption) {
+            LightingModel = LM_DIFFUSE;
+            qDebug() << "LightingModel set to LM_DIFFUSE";
+        } else if (btn == specularOption) {
+            LightingModel = LM_SPECULAR;
+            qDebug() << "LightingModel set to LM_SPECULAR";
         } else {
-            qDebug() << "Diffuse + Specular lighting model selected";
+            LightingModel = LM_DIFFUSE | LM_SPECULAR;
+            qDebug() << "LightingModel set to LM_DIFFUSE | LM_SPECULAR";
         }
+        RenderToPixels();
+        painter->render(pixels);
     });
 
     QLabel *shadingLabel = new QLabel("Shading model:", this);
@@ -71,14 +75,18 @@ ShadingTab::ShadingTab(QWidget *parent)
     connect(shadingGroup, &QButtonGroup::buttonToggled,
             this, [=](QAbstractButton *btn, bool checked){
         if (!checked) return;
-
-        if(btn == flatOption) {
-            qDebug() << "Flat shading selected";
+        if (btn == flatOption) {
+            ShadingModel = SM_FLAT;
+            qDebug() << "ShadingModel set to SM_FLAT";
         } else if (btn == gouraudOption) {
-            qDebug() << "Gouraud shading selected";
+            ShadingModel = SM_GOURAUD;
+            qDebug() << "ShadingModel set to SM_GOURAUD";
         } else {
-            qDebug() << "Phong shading selected";
+            ShadingModel = SM_PHONG;
+            qDebug() << "ShadingModel set to SM_PHONG";
         }
+        RenderToPixels();
+        painter->render(pixels);
     });
 
     QHBoxLayout* normalsLayout = new QHBoxLayout();
@@ -98,19 +106,22 @@ ShadingTab::ShadingTab(QWidget *parent)
     connect(normalsGroup, &QButtonGroup::buttonToggled,
             this, [=](QAbstractButton *btn, bool checked){
         if (!checked) return;
-
-        if(btn == computedNormalsOption) {
-            qDebug() << "Computed triangle normals selected";
+        if (btn == computedNormalsOption) {
+            UseVertexNormals = false;
+            qDebug() << "UseVertexNormals set to false (computed triangle normals)";
         } else {
-            qDebug() << "Vertex normals from model selected";
+            UseVertexNormals = true;
+            qDebug() << "UseVertexNormals set to true (vertex normals from model)";
         }
+        RenderToPixels();
+        painter->render(pixels);
     });
 
     mainLayout->addLayout(lightingLayout);
 
     mainLayout->addLayout(normalsLayout);
 
-    RenderToPixels(false);
+    RenderToPixels();
 
     painter->render(pixels);
 }

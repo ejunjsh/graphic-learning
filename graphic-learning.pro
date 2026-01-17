@@ -64,6 +64,7 @@ HEADERS += \
         mat4x4.h \
         vertex4.h \
         plane.h \
+        GenerateSphere.h \
         DepthBuffer.h \
         SimpleShuffle.h \
         SpecularTab.h \

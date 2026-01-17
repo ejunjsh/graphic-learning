@@ -2,6 +2,16 @@
 #define CONFIG_SHADING_H
 
 
+// Lighting model flags (used by demos / HTML counterparts)
+#define LM_DIFFUSE  1
+#define LM_SPECULAR 2
+
+// Shading model identifiers
+#define SM_FLAT    0
+#define SM_GOURAUD 1
+#define SM_PHONG   2
+
+
 #include <cmath>
 #include "config/config.h"
 #include "color.h"
@@ -12,7 +22,7 @@
 #include "instancex.h"
 #include "camera.h"
 #include "DepthBuffer.h"
-#include "SimpleShuffle.h"
+#include "GenerateSphere.h"
 
 namespace Shading
 {
@@ -27,6 +37,11 @@ namespace Shading
     bool drawOutlinesEnabled = false;
 
     DepthBuffer depthBuffer(CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Current lighting/shading settings (defaults mirror cgfs/shading-demo)
+    int LightingModel = LM_DIFFUSE | LM_SPECULAR; // bitmask: LM_DIFFUSE | LM_SPECULAR
+    int ShadingModel = SM_PHONG; // SM_FLAT | SM_GOURAUD | SM_PHONG
+    bool UseVertexNormals = true; // when true, use per-vertex normals from model
 
     // Initialize all pixels to white
     inline void InitializePixelsWhite()
@@ -495,33 +510,33 @@ inline void RenderTriangle(const Triangle& triangle,
             Triangle{2, 6, 7, CYAN}, Triangle{2, 7, 3, CYAN}
     };
 
-    void RenderToPixels(bool shuffle) {
+    void RenderToPixels() {
 
-    InitializePixelsWhite();
+        InitializePixelsWhite();
 
-    if (shuffle) {
-        SimpleShuffle(triangles);
-    }
+        auto cube = Model(vertexes, triangles, Vertex(0,0,0), std::sqrt(3.0));
 
-    auto cube = Model(vertexes, triangles, Vertex(0,0,0), std::sqrt(3.0));
-    auto instances = std::vector<Instance>{
-            Instance(cube, Vertex{-1.5, 0, 7}, Identity4x4, 0.75),
-            Instance(cube, Vertex{1.25, 2.5, 7.5}, MakeOYRotationMatrix(195))
-    };
+        auto sphere = GenerateSphere(15, GREEN);
 
-    auto camera = Camera(Vertex{-3, 1, 2}, MakeOYRotationMatrix(-30));
+        auto instances = std::vector<Instance>{
+                Instance(cube, Vertex{-1.5, 0, 7}, Identity4x4, 0.75),
+                Instance(cube, Vertex{1.25, 2.5, 7.5}, MakeOYRotationMatrix(195)),
+                Instance(sphere, Vertex{1.75, -0.5, 7}, Identity4x4, 1.5)
+        };
 
-        // Clipping planes (near, left, right, top, bottom) with unit normals
-    double s2 = std::sqrt(2.0) / 2.0;
-    camera.clipping_planes = {
-        Plane(Vertex(0, 0, 1), -1.0),        // Near
-        Plane(Vertex(s2, 0, s2), 0.0),       // Left
-        Plane(Vertex(-s2, 0, s2), 0.0),      // Right
-        Plane(Vertex(0, -s2, s2), 0.0),      // Top
-        Plane(Vertex(0, s2, s2), 0.0)        // Bottom
-    };
+        auto camera = Camera(Vertex{-3, 1, 2}, MakeOYRotationMatrix(-30));
 
-    RenderScene(camera, instances);
+            // Clipping planes (near, left, right, top, bottom) with unit normals
+        double s2 = std::sqrt(2.0) / 2.0;
+        camera.clipping_planes = {
+            Plane(Vertex(0, 0, 1), -1.0),        // Near
+            Plane(Vertex(s2, 0, s2), 0.0),       // Left
+            Plane(Vertex(-s2, 0, s2), 0.0),      // Right
+            Plane(Vertex(0, -s2, s2), 0.0),      // Top
+            Plane(Vertex(0, s2, s2), 0.0)        // Bottom
+        };
+
+        RenderScene(camera, instances);
     }   
 }
 
