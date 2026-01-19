@@ -9,6 +9,7 @@
 #include "vertex.h"
 #include "triangle.h"
 #include "color.h"
+#include <array>
 
 inline Model GenerateSphere(int divs, const Color& color) {
     if (divs < 3) divs = 3;
@@ -37,11 +38,13 @@ inline Model GenerateSphere(int divs, const Color& color) {
             int i1 = (d + 1) * divs + (i + 1) % divs;
             int i2 = d * divs + (i + 1) % divs;
 
-            // Triangle 0
-            triangles.emplace_back(i0, i1, i2, color);
+            // Triangle 0 with per-vertex normals (use vertex positions as normals for unit sphere)
+            triangles.emplace_back(i0, i1, i2, color,
+                                   std::array<Vertex,3>{ vertexes[i0], vertexes[i1], vertexes[i2] });
 
-            // Triangle 1
-            triangles.emplace_back(i0, i0 + divs, i1, color);
+            // Triangle 1 with per-vertex normals
+            triangles.emplace_back(i0, i0 + divs, i1, color,
+                                   std::array<Vertex,3>{ vertexes[i0], vertexes[i0 + divs], vertexes[i1] });
         }
     }
 

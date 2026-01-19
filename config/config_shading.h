@@ -21,6 +21,7 @@
 #include "model.h"
 #include "instancex.h"
 #include "camera.h"
+#include "light.h"
 #include "DepthBuffer.h"
 #include "GenerateSphere.h"
 
@@ -190,6 +191,78 @@ namespace Shading
         return Vertex(v1.x + dir.x * t, v1.y + dir.y * t, v1.z + dir.z * t);
     }
 
+    // Compute illumination at a point (vertex) given a normal, camera and lights.
+    inline double ComputeIllumination(const Vertex &vertex, const Vertex &normal, const Camera &camera, const std::vector<Light> &lights)
+    {
+        double illumination = 0.0;
+
+        for (const Light &light : lights)
+        {
+            if (light.type == Light::AMBIENT)
+            {
+                illumination += light.intensity;
+                continue;
+            }
+
+            // vl will be the vector from vertex to light (in camera space)
+            Vertex vl;
+            if (light.type == Light::DIRECTIONAL)
+            {
+                // Rotate directional light by camera orientation (transpose)
+                Mat4x4 camMat = camera.orientation.Transposed();
+                Vertex4 rotated = camMat * Vertex4(Vertex(light.position.x, light.position.y, light.position.z));
+                vl = Vertex(rotated.x, rotated.y, rotated.z);
+            }
+            else // POINT
+            {
+                Mat4x4 camMat = camera.orientation.Transposed() * MakeTranslationMatrix(Vertex(-camera.position.x, -camera.position.y, -camera.position.z));
+                Vertex4 transformed = camMat * Vertex4(Vertex(light.position.x, light.position.y, light.position.z));
+                Vertex tlight(transformed.x, transformed.y, transformed.z);
+                vl = Vertex(tlight.x - vertex.x, tlight.y - vertex.y, tlight.z - vertex.z);
+            }
+
+            double mag_vl = std::sqrt(Dot(vl, vl));
+            double mag_n = std::sqrt(Dot(normal, normal));
+
+            // Diffuse
+            if ((LightingModel & LM_DIFFUSE) && mag_vl > 0.0 && mag_n > 0.0)
+            {
+                double cos_alpha = Dot(vl, normal) / (mag_vl * mag_n);
+                if (cos_alpha > 0.0)
+                    illumination += cos_alpha * light.intensity;
+            }
+
+            // Specular
+            if (LightingModel & LM_SPECULAR)
+            {
+                // reflected = 2*(n·vl)*n - vl
+                double ndotv = Dot(normal, vl);
+                Vertex reflected(
+                    2.0 * ndotv * normal.x - vl.x,
+                    2.0 * ndotv * normal.y - vl.y,
+                    2.0 * ndotv * normal.z - vl.z);
+
+                Vertex view = Vertex(camera.position.x - vertex.x,
+                                     camera.position.y - vertex.y,
+                                     camera.position.z - vertex.z);
+
+                double mag_ref = std::sqrt(Dot(reflected, reflected));
+                double mag_view = std::sqrt(Dot(view, view));
+                if (mag_ref > 0.0 && mag_view > 0.0)
+                {
+                    double cos_beta = Dot(reflected, view) / (mag_ref * mag_view);
+                    if (cos_beta > 0.0)
+                    {
+                        const double specularExp = 50.0;
+                        illumination += std::pow(cos_beta, specularExp) * light.intensity;
+                    }
+                }
+            }
+        }
+
+        return illumination;
+    }
+
     inline void ClipTriangle(const Triangle &triangle,
                              const Plane &plane,
                              std::vector<Triangle> &out_triangles,
@@ -354,7 +427,10 @@ namespace Shading
 
 inline void RenderTriangle(const Triangle& triangle,
                            const std::vector<Vertex>& vertexes,
-                           const std::vector<Point>& projected)
+                           const std::vector<Point>& projected,
+                           const Camera& camera,
+                           const std::vector<Light>& lights,
+                           const Mat4x4& orientation)
 {
     // build local vertex index array (triangle.v0/v1/v2)
     std::array<int,3> verts = { triangle.v0, triangle.v1, triangle.v2 };
@@ -443,8 +519,8 @@ inline void RenderTriangle(const Triangle& triangle,
     }
 }
 
-    // Renders a model
-    void RenderModel(const Model &model)
+    // Renders a model with camera, lights and instance orientation
+    void RenderModel(const Model &model, const Camera &camera, const std::vector<Light> &lights, const Mat4x4 &orientation)
     {
         std::vector<Point> projected;
         projected.reserve(model.vertexes.size());
@@ -455,11 +531,11 @@ inline void RenderTriangle(const Triangle& triangle,
         }
         for (const auto &tri : model.triangles)
         {
-            RenderTriangle(tri, model.vertexes, projected);
+            RenderTriangle(tri, model.vertexes, projected, camera, lights, orientation);
         }
     }
 
-    void RenderScene(const Camera &camera, const std::vector<Instance> &instances)
+        void RenderScene(const Camera &camera, const std::vector<Instance> &instances, const std::vector<Light> &lights)
     {
         Mat4x4 cameraMatrix = camera.orientation.Transposed() *
                               MakeTranslationMatrix(-camera.position);
@@ -473,7 +549,7 @@ inline void RenderTriangle(const Triangle& triangle,
             if (!clipped_model_opt)
                 continue;
 
-            RenderModel(*clipped_model_opt);
+            RenderModel(*clipped_model_opt, camera, lights, instance.orientation);
         }
     }
 
@@ -542,7 +618,13 @@ inline void RenderTriangle(const Triangle& triangle,
             Plane(Vertex(0, s2, s2), 0.0)        // Bottom
         };
 
-        RenderScene(camera, instances);
+        auto lights = std::vector<Light>{
+            Light(Light::AMBIENT, 0.2),
+            Light(Light::POINT, 0.6, Vector(2, 1, 0)),
+            Light(Light::DIRECTIONAL, 0.2, Vector(1, -4, 4))
+        };
+
+        RenderScene(camera, instances, lights);
     }   
 }
 
