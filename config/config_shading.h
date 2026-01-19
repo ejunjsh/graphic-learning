@@ -33,10 +33,6 @@ namespace Shading
     constexpr double viewport_size = 1.0;
     constexpr double projection_plane_z = 1.0;
 
-    bool depthChecksEnabled = true;
-
-    bool drawOutlinesEnabled = false;
-
     DepthBuffer depthBuffer(CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Current lighting/shading settings (defaults mirror cgfs/shading-demo)
@@ -78,6 +74,25 @@ namespace Shading
         return Point(
             p2d.x * CANVAS_WIDTH / viewport_size,
             p2d.y * CANVAS_HEIGHT / viewport_size);
+    }
+
+    // Converts 2D canvas coordinates to 2D viewport coordinates.
+    Point CanvasToViewport(const Point &p2d)
+    {
+        return Point(
+            p2d.x * viewport_size / CANVAS_WIDTH,
+            p2d.y * viewport_size / CANVAS_HEIGHT);
+    }
+
+    // Un-project a canvas pixel (x,y) with given inverse-Z back into camera-space Vertex.
+    // x,y should be canvas coordinates (centered, same convention as PutPixel).
+    inline Vertex UnProjectVertex(double x, double y, double inv_z)
+    {
+        double oz = 1.0 / inv_z;
+        double ux = x * oz / projection_plane_z;
+        double uy = y * oz / projection_plane_z;
+        Point p2d = CanvasToViewport(Point(ux, uy));
+        return Vertex(p2d.x, p2d.y, oz);
     }
 
     // Projects a 3D vertex to 2D canvas coordinates.
@@ -447,13 +462,11 @@ inline void RenderTriangle(const Triangle& triangle,
 
     // backface culling: use triangle normal (unsorted vertex order)
     Vertex normal = ComputeTriangleNormal(A, B, C);
-    if (depthChecksEnabled) {
-        Vertex centre{ (A.x + B.x + C.x) / -3.0,
-                       (A.y + B.y + C.y) / -3.0,
-                       (A.z + B.z + C.z) / -3.0 };
-        auto dot_product = Dot(centre, normal);
-        if (dot_product < 0.0) return; // cull
-    }
+    Vertex centre{ (A.x + B.x + C.x) / -3.0,
+                   (A.y + B.y + C.y) / -3.0,
+                   (A.z + B.z + C.z) / -3.0 };
+    auto dot_product = Dot(centre, normal);
+    if (dot_product < 0.0) return; // cull
 
     // projected points (sorted)
     Point p0 = projected[idx(i0)];
@@ -504,18 +517,10 @@ inline void RenderTriangle(const Triangle& triangle,
 
         for (int x = xl; x <= xr; ++x) {
             double inv_z = zscan[x - xl];
-            if (!depthChecksEnabled || depthBuffer.updateIfCloserCentered(x, y, inv_z)) {
+            if (depthBuffer.updateIfCloserCentered(x, y, inv_z)) {
                 PutPixel(x, y, triangle.color);
             }
         }
-    }
-
-    // optional outlines
-    if (drawOutlinesEnabled) {
-        Color outline = triangle.color * 0.75;
-        DrawLine(projected[idx(i0)], projected[idx(i1)], outline);
-        DrawLine(projected[idx(i0)], projected[idx(i2)], outline);
-        DrawLine(projected[idx(i2)], projected[idx(i1)], outline);
     }
 }
 
