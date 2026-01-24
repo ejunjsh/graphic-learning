@@ -43,7 +43,8 @@ SOURCES += \
         TransformsTab.cpp \
         ClippingTab.cpp \
         DepthTab.cpp \
-        ShadingTab.cpp
+        ShadingTab.cpp \
+        TextureQImage.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -81,7 +82,8 @@ HEADERS += \
         TransformsTab.h \
         ClippingTab.h \
         DepthTab.h \
-        ShadingTab.h 
+        ShadingTab.h \
+        TextureQImage.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
