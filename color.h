@@ -29,6 +29,13 @@ public:
                      static_cast<int>(b * scalar));
     }
 
+    // Multiply color by a scalar (double overload)
+    Color operator*(double scalar) const {
+        return Color(static_cast<int>(r * scalar),
+                     static_cast<int>(g * scalar),
+                     static_cast<int>(b * scalar));
+    }
+
      Color operator*(const Color& other) const {
         return Color(
             static_cast<int>(r * other.r),

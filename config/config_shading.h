@@ -460,13 +460,16 @@ inline void RenderTriangle(const Triangle& triangle,
     const Vertex &B = vertexes[triangle.v1];
     const Vertex &C = vertexes[triangle.v2];
 
-    // backface culling: use triangle normal (unsorted vertex order)
-    Vertex normal = ComputeTriangleNormal(A, B, C);
-    Vertex centre{ (A.x + B.x + C.x) / -3.0,
-                   (A.y + B.y + C.y) / -3.0,
-                   (A.z + B.z + C.z) / -3.0 };
-    auto dot_product = Dot(centre, normal);
-    if (dot_product < 0.0) return; // cull
+    // Compute triangle normal (use unsorted vertices for correct winding)
+    Vertex triNormal = ComputeTriangleNormal(A, B, C);
+
+    // Backface culling: compute centroid and test
+    Vertex centre = Vertex((A.x + B.x + C.x) / 3.0,
+                           (A.y + B.y + C.y) / 3.0,
+                           (A.z + B.z + C.z) / 3.0);
+    if (Dot(Vertex(-centre.x, -centre.y, -centre.z), triNormal) < 0.0) {
+        return;
+    }
 
     // projected points (sorted)
     Point p0 = projected[idx(i0)];
@@ -488,18 +491,65 @@ inline void RenderTriangle(const Triangle& triangle,
     const std::vector<double> &iz02 = ze.first;
     const std::vector<double> &iz012= ze.second;
 
-    // pick left/right by comparing midpoint
+    // Prepare shading attributes
+    std::vector<double> i02, i012;
+    std::vector<double> nx02, nx012, ny02, ny012, nz02, nz012;
+
+    // Per-vertex normals in camera space
+    Vertex normal0, normal1, normal2;
+    if (UseVertexNormals) {
+        Mat4x4 transform = camera.orientation.Transposed() * orientation;
+        Vertex4 t0 = transform * Vertex4(triangle.normals[i0]);
+        Vertex4 t1 = transform * Vertex4(triangle.normals[i1]);
+        Vertex4 t2 = transform * Vertex4(triangle.normals[i2]);
+        normal0 = Vertex(t0.x, t0.y, t0.z);
+        normal1 = Vertex(t1.x, t1.y, t1.z);
+        normal2 = Vertex(t2.x, t2.y, t2.z);
+    } else {
+        normal0 = normal1 = normal2 = triNormal;
+    }
+
+    double flat_intensity = 0.0;
+    if (ShadingModel == SM_FLAT) {
+        Vertex centerPt{ (A.x + B.x + C.x) / 3.0, (A.y + B.y + C.y) / 3.0, (A.z + B.z + C.z) / 3.0 };
+        flat_intensity = ComputeIllumination(centerPt, normal0, camera, lights);
+    } else if (ShadingModel == SM_GOURAUD) {
+        double ii0 = ComputeIllumination(vertexes[idx(i0)], normal0, camera, lights);
+        double ii1 = ComputeIllumination(vertexes[idx(i1)], normal1, camera, lights);
+        double ii2 = ComputeIllumination(vertexes[idx(i2)], normal2, camera, lights);
+        auto ie = EdgeInterpolate(y0, ii0, y1, ii1, y2, ii2);
+        i02 = std::move(ie.first);
+        i012 = std::move(ie.second);
+    } else if (ShadingModel == SM_PHONG) {
+        auto nx = EdgeInterpolate(y0, normal0.x, y1, normal1.x, y2, normal2.x);
+        auto ny = EdgeInterpolate(y0, normal0.y, y1, normal1.y, y2, normal2.y);
+        auto nz = EdgeInterpolate(y0, normal0.z, y1, normal1.z, y2, normal2.z);
+        nx02 = std::move(nx.first); nx012 = std::move(nx.second);
+        ny02 = std::move(ny.first); ny012 = std::move(ny.second);
+        nz02 = std::move(nz.first); nz012 = std::move(nz.second);
+    }
+
+    // Determine left/right edges
     std::size_t m = x02.size() / 2;
     const std::vector<double> *x_left, *x_right, *iz_left, *iz_right;
+    const std::vector<double> *i_left = nullptr, *i_right = nullptr;
+    const std::vector<double> *nx_left = nullptr, *nx_right = nullptr;
+    const std::vector<double> *ny_left = nullptr, *ny_right = nullptr;
+    const std::vector<double> *nz_left = nullptr, *nz_right = nullptr;
+
     if (m < x02.size() && m < x012.size() && x02[m] < x012[m]) {
         x_left = &x02;  x_right = &x012;
         iz_left  = &iz02; iz_right = &iz012;
+        if (!i02.empty()) { i_left = &i02; i_right = &i012; }
+        if (!nx02.empty()) { nx_left = &nx02; nx_right = &nx012; ny_left = &ny02; ny_right = &ny012; nz_left = &nz02; nz_right = &nz012; }
     } else {
         x_left = &x012; x_right = &x02;
         iz_left  = &iz012; iz_right = &iz02;
+        if (!i02.empty()) { i_left = &i012; i_right = &i02; }
+        if (!nx02.empty()) { nx_left = &nx012; nx_right = &nx02; ny_left = &ny012; ny_right = &ny02; nz_left = &nz012; nz_right = &nz02; }
     }
 
-    // rasterize scanlines
+    // Rasterize scanlines
     for (int y = y0; y <= y2; ++y) {
         int row = y - y0;
         if (row < 0) continue;
@@ -512,14 +562,33 @@ inline void RenderTriangle(const Triangle& triangle,
         int xr = static_cast<int>(std::round((*x_right)[row]));
         if (xr < xl) std::swap(xl, xr);
 
-        // interpolate inverse-z across scanline
         auto zscan = Interpolate(xl, (*iz_left)[row], xr, (*iz_right)[row]);
+
+        // Per-scanline attribute interpolation
+        std::vector<double> iscan;
+        std::vector<double> nxscan, nyscan, nzscan;
+        if (ShadingModel == SM_GOURAUD && i_left && i_right) {
+            iscan = Interpolate(xl, (*i_left)[row], xr, (*i_right)[row]);
+        } else if (ShadingModel == SM_PHONG && nx_left && ny_left && nz_left) {
+            nxscan = Interpolate(xl, (*nx_left)[row], xr, (*nx_right)[row]);
+            nyscan = Interpolate(xl, (*ny_left)[row], xr, (*ny_right)[row]);
+            nzscan = Interpolate(xl, (*nz_left)[row], xr, (*nz_right)[row]);
+        }
 
         for (int x = xl; x <= xr; ++x) {
             double inv_z = zscan[x - xl];
-            if (depthBuffer.updateIfCloserCentered(x, y, inv_z)) {
-                PutPixel(x, y, triangle.color);
+            if (!depthBuffer.updateIfCloserCentered(x, y, inv_z)) continue;
+
+            double intensity = flat_intensity;
+            if (ShadingModel == SM_GOURAUD && !iscan.empty()) {
+                intensity = iscan[x - xl];
+            } else if (ShadingModel == SM_PHONG && !nxscan.empty()) {
+                Vertex vertex = UnProjectVertex(x, y, inv_z);
+                Vertex interpNormal{ nxscan[x - xl], nyscan[x - xl], nzscan[x - xl] };
+                intensity = ComputeIllumination(vertex, interpNormal, camera, lights);
             }
+
+            PutPixel(x, y, triangle.color * intensity);
         }
     }
 }
@@ -625,8 +694,8 @@ inline void RenderTriangle(const Triangle& triangle,
 
         auto lights = std::vector<Light>{
             Light(Light::AMBIENT, 0.2),
-            Light(Light::POINT, 0.6, Vector(2, 1, 0)),
-            Light(Light::DIRECTIONAL, 0.2, Vector(1, -4, 4))
+            Light(Light::DIRECTIONAL, 0.2, Vector(-1, 0, 1)),
+            Light(Light::POINT, 0.6, Vector(-3, 2, -10))
         };
 
         RenderScene(camera, instances, lights);
