@@ -43,7 +43,8 @@ SOURCES += \
         TransformsTab.cpp \
         ClippingTab.cpp \
         DepthTab.cpp \
-        ShadingTab.cpp 
+        ShadingTab.cpp \
+        TextureTab.cpp 
 
 HEADERS += \
         mainwindow.h \
@@ -82,6 +83,7 @@ HEADERS += \
         ClippingTab.h \
         DepthTab.h \
         ShadingTab.h \
+        TextureTab.h \
         texture.h
 
 # Default rules for deployment.

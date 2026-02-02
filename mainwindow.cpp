@@ -20,6 +20,7 @@
 #include "ClippingTab.h"
 #include "DepthTab.h"
 #include "ShadingTab.h"
+#include "TextureTab.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -83,6 +84,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     ShadingTab *shadingTab = new ShadingTab();
     tabWidget->addTab(shadingTab, "shading");
+
+    TextureTab *textureTab = new TextureTab();
+    tabWidget->addTab(textureTab, "texture");
 
     layout->addWidget(tabWidget);
 
