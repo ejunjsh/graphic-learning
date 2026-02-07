@@ -86,6 +86,11 @@ HEADERS += \
         TextureTab.h \
         texture.h
 
+RESOURCES += resources.qrc
+
+# macOS app icon (optional). Generate assets/icon.icns and qmake will pick it up on macOS.
+unix:macx { ICON = assets/icon.icns }
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
