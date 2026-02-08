@@ -645,26 +645,28 @@ inline void RenderTriangle(const Triangle& triangle,
     auto PURPLE = Color(255, 0, 255);
     auto CYAN = Color(0, 255, 255);
 
-        auto triangles = std::vector<Triangle>{
-            // front face (normal +Z)
-            Triangle{0, 1, 2, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}},
-            Triangle{0, 2, 3, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}},
-            // back face (normal -Z)
-            Triangle{4, 0, 3, GREEN,  {Vertex{1,0,0}, Vertex{1,0,0}, Vertex{1,0,0}}},
-            Triangle{4, 3, 7, GREEN,  {Vertex{1,0,0}, Vertex{1,0,0}, Vertex{1,0,0}}},
-            // left face (normal +X)
-            Triangle{5, 4, 7, BLUE,   {Vertex{0,0,-1}, Vertex{0,0,-1}, Vertex{0,0,-1}}},
-            Triangle{5, 7, 6, BLUE,   {Vertex{0,0,-1}, Vertex{0,0,-1}, Vertex{0,0,-1}}},
-            // right face (normal -X)
-            Triangle{1, 5, 6, YELLOW, {Vertex{-1,0,0}, Vertex{-1,0,0}, Vertex{-1,0,0}}},
-            Triangle{1, 6, 2, YELLOW, {Vertex{-1,0,0}, Vertex{-1,0,0}, Vertex{-1,0,0}}},
-            // top face (normal +Y)
-            Triangle{4, 5, 1, PURPLE, {Vertex{0,1,0}, Vertex{0,1,0}, Vertex{0,1,0}}},
-            Triangle{4, 1, 0, PURPLE, {Vertex{0,1,0}, Vertex{0,1,0}, Vertex{0,1,0}}},
-            // bottom face (normal -Y)
-            Triangle{2, 6, 7, CYAN,   {Vertex{0,-1,0}, Vertex{0,-1,0}, Vertex{0,-1,0}}},
-            Triangle{2, 7, 3, CYAN,   {Vertex{0,-1,0}, Vertex{0,-1,0}, Vertex{0,-1,0}}}
-        };
+    auto wood_texture = std::make_shared<Texture>(":/cgfs/textures-demo/crate-texture.jpg");
+
+    auto triangles = std::vector<Triangle>{
+        // front face (normal +Z)
+        Triangle{0, 1, 2, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},
+        Triangle{0, 2, 3, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}, wood_texture, {Pt(0, 0), Pt(1, 1), Pt(0, 1)}},
+        // back face (normal -Z)
+        Triangle{4, 0, 3, GREEN,  {Vertex{1,0,0}, Vertex{1,0,0}, Vertex{1,0,0}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},
+        Triangle{4, 3, 7, GREEN,  {Vertex{1,0,0}, Vertex{1,0,0}, Vertex{1,0,0}}, wood_texture, {Pt(0, 0), Pt(1, 1), Pt(0, 1)}},
+        // left face (normal +X)
+        Triangle{5, 4, 7, BLUE,   {Vertex{0,0,-1}, Vertex{0,0,-1}, Vertex{0,0,-1}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},
+        Triangle{5, 7, 6, BLUE,   {Vertex{0,0,-1}, Vertex{0,0,-1}, Vertex{0,0,-1}}, wood_texture, {Pt(0, 0), Pt(1, 1), Pt(0, 1)}},
+        // right face (normal -X)
+        Triangle{1, 5, 6, YELLOW, {Vertex{-1,0,0}, Vertex{-1,0,0}, Vertex{-1,0,0}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},
+        Triangle{1, 6, 2, YELLOW, {Vertex{-1,0,0}, Vertex{-1,0,0}, Vertex{-1,0,0}}, wood_texture, {Pt(0, 0), Pt(1, 1), Pt(0, 1)}},
+        // top face (normal +Y)
+        Triangle{4, 5, 1, PURPLE, {Vertex{0,1,0}, Vertex{0,1,0}, Vertex{0,1,0}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},
+        Triangle{4, 1, 0, PURPLE, {Vertex{0,1,0}, Vertex{0,1,0}, Vertex{0,1,0}}, wood_texture, {Pt(0, 1), Pt(1, 1), Pt(0, 0)}},
+        // bottom face (normal -Y)
+        Triangle{2, 6, 7, CYAN,   {Vertex{0,-1,0}, Vertex{0,-1,0}, Vertex{0,-1,0}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},
+        Triangle{2, 7, 3, CYAN,   {Vertex{0,-1,0}, Vertex{0,-1,0}, Vertex{0,-1,0}}, wood_texture, {Pt(0, 0), Pt(1, 1), Pt(0, 1)}}
+    };
 
     void RenderToPixels() {
 
@@ -672,12 +674,12 @@ inline void RenderTriangle(const Triangle& triangle,
 
         auto cube = Model(vertexes, triangles, Vertex(0,0,0), std::sqrt(3.0));
 
-        auto sphere = GenerateSphere(15, GREEN);
+        // auto sphere = GenerateSphere(15, GREEN);
 
         auto instances = std::vector<Instance>{
                 Instance(cube, Vertex{-1.5, 0, 7}, Identity4x4, 0.75),
                 Instance(cube, Vertex{1.25, 2.5, 7.5}, MakeOYRotationMatrix(195)),
-                Instance(sphere, Vertex{1.75, -0.5, 7}, Identity4x4, 1.5)
+                Instance(cube, Vertex{1.75, 0, 5}, MakeOYRotationMatrix(-30))
         };
 
         auto camera = Camera(Vertex{-3, 1, 2}, MakeOYRotationMatrix(-30));
