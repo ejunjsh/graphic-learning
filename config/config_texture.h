@@ -39,6 +39,7 @@ namespace TextureDemo
     int LightingModel = LM_DIFFUSE | LM_SPECULAR; // bitmask: LM_DIFFUSE | LM_SPECULAR
     int ShadingModel = SM_PHONG; // SM_FLAT | SM_GOURAUD | SM_PHONG
     bool UseVertexNormals = true; // when true, use per-vertex normals from model
+    bool UsePerspectiveCorrectDepth = true; 
 
     // Initialize all pixels to white
     inline void InitializePixelsWhite()
