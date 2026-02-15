@@ -50,6 +50,13 @@ TextureTab::TextureTab(QWidget *parent)
 
     mainLayout->addLayout(perspectiveCorrectDepthLayout);
 
+    auto wood_texture = std::make_shared<Texture>(":/cgfs/textures-demo/crate-texture.jpg");
+
+    // set texture for all triangles
+    for (auto& tri : triangles) {    
+        tri.setTexture(wood_texture);
+    }
+
     RenderToPixels();
 
     painter->render(pixels);

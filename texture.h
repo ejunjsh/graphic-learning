@@ -2,14 +2,27 @@
 #define TEXTURE_H
 
 #include <QImage>
+#include <QImageReader>
+#include <QDebug>
 #include "color.h"
+#include <QResource>
 
 class Texture {
 public:
     Texture(const QString& filePath) {
-        image.load(filePath);
-        if (image.isNull()) {
-            // Handle error, maybe throw or log
+        // Quick resource existence check (useful for :/ paths)
+        QResource res(filePath);
+        if (!res.isValid()) {
+            qWarning() << "Texture resource not found:" << filePath;
+        }
+
+        QImageReader reader(filePath);
+        if (!reader.read(&image)) {
+            qWarning() << "Texture load failed for" << filePath << ":" << reader.errorString();
+        } else {
+            image = image.convertToFormat(QImage::Format_RGB888);
+            qDebug() << "Texture loaded successfully from path:" << filePath;
+            qDebug() << "Texture dimensions:" << image.width() << "x" << image.height();
         }
     }
 

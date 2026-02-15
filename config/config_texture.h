@@ -492,6 +492,40 @@ inline void RenderTriangle(const Triangle& triangle,
     const std::vector<double> &iz02 = ze.first;
     const std::vector<double> &iz012= ze.second;
 
+    // Texture coordinate edge interpolation (if texture present)
+    std::vector<double> uz02, uz012, vz02, vz012;
+    if (triangle.texture) {
+        if (UsePerspectiveCorrectDepth) {
+            uz02 = std::get<0>(EdgeInterpolate(y0, triangle.uvs[i0].x / vertexes[idx(i0)].z,
+                                               y1, triangle.uvs[i1].x / vertexes[idx(i1)].z,
+                                               y2, triangle.uvs[i2].x / vertexes[idx(i2)].z));
+            uz012 = std::get<1>(EdgeInterpolate(y0, triangle.uvs[i0].x / vertexes[idx(i0)].z,
+                                               y1, triangle.uvs[i1].x / vertexes[idx(i1)].z,
+                                               y2, triangle.uvs[i2].x / vertexes[idx(i2)].z));
+
+            vz02 = std::get<0>(EdgeInterpolate(y0, triangle.uvs[i0].y / vertexes[idx(i0)].z,
+                                               y1, triangle.uvs[i1].y / vertexes[idx(i1)].z,
+                                               y2, triangle.uvs[i2].y / vertexes[idx(i2)].z));
+            vz012 = std::get<1>(EdgeInterpolate(y0, triangle.uvs[i0].y / vertexes[idx(i0)].z,
+                                               y1, triangle.uvs[i1].y / vertexes[idx(i1)].z,
+                                               y2, triangle.uvs[i2].y / vertexes[idx(i2)].z));
+        } else {
+            uz02 = std::get<0>(EdgeInterpolate(y0, static_cast<double>(triangle.uvs[i0].x),
+                                               y1, static_cast<double>(triangle.uvs[i1].x),
+                                               y2, static_cast<double>(triangle.uvs[i2].x)));
+            uz012 = std::get<1>(EdgeInterpolate(y0, static_cast<double>(triangle.uvs[i0].x),
+                                               y1, static_cast<double>(triangle.uvs[i1].x),
+                                               y2, static_cast<double>(triangle.uvs[i2].x)));
+
+            vz02 = std::get<0>(EdgeInterpolate(y0, static_cast<double>(triangle.uvs[i0].y),
+                                               y1, static_cast<double>(triangle.uvs[i1].y),
+                                               y2, static_cast<double>(triangle.uvs[i2].y)));
+            vz012 = std::get<1>(EdgeInterpolate(y0, static_cast<double>(triangle.uvs[i0].y),
+                                               y1, static_cast<double>(triangle.uvs[i1].y),
+                                               y2, static_cast<double>(triangle.uvs[i2].y)));
+        }
+    }
+
     // Prepare shading attributes
     std::vector<double> i02, i012;
     std::vector<double> nx02, nx012, ny02, ny012, nz02, nz012;
@@ -537,17 +571,21 @@ inline void RenderTriangle(const Triangle& triangle,
     const std::vector<double> *nx_left = nullptr, *nx_right = nullptr;
     const std::vector<double> *ny_left = nullptr, *ny_right = nullptr;
     const std::vector<double> *nz_left = nullptr, *nz_right = nullptr;
+    const std::vector<double> *uz_left = nullptr, *uz_right = nullptr;
+    const std::vector<double> *vz_left = nullptr, *vz_right = nullptr;
 
     if (m < x02.size() && m < x012.size() && x02[m] < x012[m]) {
         x_left = &x02;  x_right = &x012;
         iz_left  = &iz02; iz_right = &iz012;
         if (!i02.empty()) { i_left = &i02; i_right = &i012; }
         if (!nx02.empty()) { nx_left = &nx02; nx_right = &nx012; ny_left = &ny02; ny_right = &ny012; nz_left = &nz02; nz_right = &nz012; }
+        if (!uz02.empty()) { uz_left = &uz02; uz_right = &uz012; vz_left = &vz02; vz_right = &vz012; }
     } else {
         x_left = &x012; x_right = &x02;
         iz_left  = &iz012; iz_right = &iz02;
         if (!i02.empty()) { i_left = &i012; i_right = &i02; }
         if (!nx02.empty()) { nx_left = &nx012; nx_right = &nx02; ny_left = &ny012; ny_right = &ny02; nz_left = &nz012; nz_right = &nz02; }
+        if (!uz02.empty()) { uz_left = &uz012; uz_right = &uz02; vz_left = &vz012; vz_right = &vz02; }
     }
 
     // Rasterize scanlines
@@ -568,12 +606,18 @@ inline void RenderTriangle(const Triangle& triangle,
         // Per-scanline attribute interpolation
         std::vector<double> iscan;
         std::vector<double> nxscan, nyscan, nzscan;
+        std::vector<double> uzscan, vzscan;
         if (ShadingModel == SM_GOURAUD && i_left && i_right) {
             iscan = Interpolate(xl, (*i_left)[row], xr, (*i_right)[row]);
         } else if (ShadingModel == SM_PHONG && nx_left && ny_left && nz_left) {
             nxscan = Interpolate(xl, (*nx_left)[row], xr, (*nx_right)[row]);
             nyscan = Interpolate(xl, (*ny_left)[row], xr, (*ny_right)[row]);
             nzscan = Interpolate(xl, (*nz_left)[row], xr, (*nz_right)[row]);
+        }
+
+        if (triangle.texture && uz_left && vz_left) {
+            uzscan = Interpolate(xl, (*uz_left)[row], xr, (*uz_right)[row]);
+            vzscan = Interpolate(xl, (*vz_left)[row], xr, (*vz_right)[row]);
         }
 
         for (int x = xl; x <= xr; ++x) {
@@ -589,7 +633,25 @@ inline void RenderTriangle(const Triangle& triangle,
                 intensity = ComputeIllumination(vertex, interpNormal, camera, lights);
             }
 
-            PutPixel(x, y, triangle.color * intensity);
+            Color outColor;
+            if (triangle.texture && !uzscan.empty() && !vzscan.empty()) {
+                double u, v;
+                if (UsePerspectiveCorrectDepth) {
+                    // uzscan stores u/z, zscan stores 1/z -> (u/z)/(1/z) = u
+                    u = uzscan[x - xl] / zscan[x - xl];
+                    v = vzscan[x - xl] / zscan[x - xl];
+                } else {
+                    u = uzscan[x - xl];
+                    v = vzscan[x - xl];
+                }
+                // Sample texture and modulate by intensity
+                Color tex = triangle.texture->getTexel(u, v);
+                outColor = tex * intensity;
+            } else {
+                outColor = triangle.color * intensity;
+            }
+
+            PutPixel(x, y, outColor);
         }
     }
 }
@@ -646,8 +708,8 @@ inline void RenderTriangle(const Triangle& triangle,
     auto PURPLE = Color(255, 0, 255);
     auto CYAN = Color(0, 255, 255);
 
-    auto wood_texture = std::make_shared<Texture>(":/cgfs/textures-demo/crate-texture.jpg");
-
+    auto wood_texture = nullptr; // set value in the TexureTab.cpp file
+    
     auto triangles = std::vector<Triangle>{
         // front face (normal +Z)
         Triangle{0, 1, 2, RED,    {Vertex{0,0,1}, Vertex{0,0,1}, Vertex{0,0,1}}, wood_texture, {Pt(0, 0), Pt(1, 0), Pt(1, 1)}},

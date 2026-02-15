@@ -17,7 +17,11 @@ public:
     std::shared_ptr<Texture> texture;
     std::array<Pt, 3> uvs;
 
+    // Set the texture for this triangle
+    void setTexture(const std::shared_ptr<Texture>& tex) { texture = tex; }
 
+    // Set the texture and per-vertex UV coordinates
+    void setTexture(const std::shared_ptr<Texture>& tex, const std::array<Pt,3>& newUvs) { texture = tex; uvs = newUvs; }
     // Constructor
     Triangle(int v0, int v1, int v2, const Color& color, const std::array<Vertex,3>& normals = {}, std::shared_ptr<Texture> texture = nullptr, const std::array<Pt,3>& uvs = {})
         : v0(v0), v1(v1), v2(v2), color(color), normals(normals), texture(texture), uvs(uvs) {}
