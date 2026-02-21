@@ -22,6 +22,8 @@ const Sphere SPHERES[] = {
 
 const int NUM_SPHERES = sizeof(SPHERES) / sizeof(SPHERES[0]);
 
+double EPSILON = 0.001; // Small offset to prevent self-intersection when tracing shadow rays
+
 // Converts 2D canvas coordinates to 3D viewport coordinates
 inline Vector CanvasToViewport(int x, int y) {
     return Vector(
@@ -108,7 +110,7 @@ inline double ComputeLighting(const Vector& point, const Vector& normal,  const 
 
             }
 
-            auto [blocker, t_blocker] = ClosestIntersection(point, vec_l, 0.001, t_max);
+            auto [blocker, t_blocker] = ClosestIntersection(point, vec_l, EPSILON, t_max);
             if (blocker != nullptr) {
                 continue;
             }
