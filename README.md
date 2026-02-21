@@ -2,6 +2,8 @@
 
 QT + graphic
 
+![Example screenshot](assets/example.png)
+
 
 ## precodition
 
@@ -19,4 +21,11 @@ mkdir build
 cd build
 qmake ..
 make
+````
+
+## run
+
+````
+cd build
+./graphic-learning
 ````
